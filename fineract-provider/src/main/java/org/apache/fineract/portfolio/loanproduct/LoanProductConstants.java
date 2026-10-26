@@ -142,4 +142,8 @@ public interface LoanProductConstants {
     String OVER_APPLIED_CALCULATION_TYPE = "overAppliedCalculationType";
     String OVER_APPLIED_NUMBER = "overAppliedNumber";
 
+    // Early payoff charge related
+    String EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME = "earlyPayoffChargeCalculationType";
+    String EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME = "earlyPayoffChargeAmount";
+
 }

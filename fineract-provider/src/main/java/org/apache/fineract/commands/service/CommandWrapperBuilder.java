@@ -905,6 +905,24 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder loanPayoff(final Long loanId) {
+        this.actionName = "PAYOFF";
+        this.entityName = "LOAN";
+        this.entityId = null;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/transactions?command=payoff";
+        return this;
+    }
+
+    public CommandWrapperBuilder loanBatchPrincipalPaydown(final Long loanId) {
+        this.actionName = "BATCHPRINCIPALPAYDOWN";
+        this.entityName = "LOAN";
+        this.entityId = null;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/transactions?command=batchPrincipalPaydown";
+        return this;
+    }
+
     public CommandWrapperBuilder creditBalanceRefund(final Long loanId) {
         this.actionName = "CREDITBALANCEREFUND";
         this.entityName = "LOAN";

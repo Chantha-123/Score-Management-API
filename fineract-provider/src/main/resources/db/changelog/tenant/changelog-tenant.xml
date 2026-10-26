@@ -47,4 +47,8 @@
     <include file="parts/0030_gender_code_values.xml" relativeToChangelogFile="true"/>
     <include file="parts/0031_relationship_code_values.xml" relativeToChangelogFile="true"/>
     <include file="parts/0032_marital_status_code_values.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0033_add_loan_early_payoff_charge.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0034_add_batch_principal_paydown_permission.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0035_add_m_loan_batch_principal_paydown_table.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0036_add_m_loan_simi_principal_grace.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

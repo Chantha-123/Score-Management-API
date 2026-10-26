@@ -1,0 +1,58 @@
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DB_PORT:-3307}:3306"
+  api:
+    build:
+      target: development
+    image: score-management-api:dev
+    healthcheck:
+      # Allow the first cold Gradle build and dependency downloads to finish.
+      start_period: 600s
+    volumes:
+      - ../:/source:ro
+      - api-workspace:/workspace
+      - gradle-cache:/gradle-cache
+      - gradle-project-cache:/workspace/.gradle
+      - gradle-buildsrc-cache:/workspace/buildSrc/.gradle
+      - gradle-buildsrc-output:/workspace/buildSrc/build
+      - api-build:/workspace/fineract-provider/build
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+  frontend:
+    build:
+      target: dev-proxy
+    image: score-management-frontend:dev-proxy
+    ports:
+      - "127.0.0.1:${WEB_PORT:-9090}:80"
+    depends_on:
+      ui-dev:
+        condition: service_healthy
+  ui-dev:
+    build:
+      context: ${FRONTEND_PATH:-../../Score-Management-System-Frontend}
+      target: development
+    image: score-management-frontend:dev
+    init: true
+    environment:
+      DOCKER_DEV: "true"
+    volumes:
+      - ${FRONTEND_PATH:-../../Score-Management-System-Frontend}/app:/usr/src/app/app
+      - ${FRONTEND_PATH:-../../Score-Management-System-Frontend}/Gruntfile.js:/usr/src/app/Gruntfile.js:ro
+      - bower-components:/usr/src/app/app/bower_components
+    ports:
+      - "127.0.0.1:${LIVERELOAD_PORT:-35729}:35729"
+    healthcheck:
+      test: [CMD, node, -e, "require('http').get('http://127.0.0.1:9002/', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+volumes:
+  gradle-cache:
+  api-workspace:
+  gradle-project-cache:
+  gradle-buildsrc-cache:
+  gradle-buildsrc-output:
+  api-build:
+  bower-components:

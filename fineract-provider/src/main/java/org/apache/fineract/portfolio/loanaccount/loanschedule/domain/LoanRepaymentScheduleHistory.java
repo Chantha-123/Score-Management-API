@@ -124,4 +124,36 @@ public class LoanRepaymentScheduleHistory extends AbstractPersistableCustom {
 
     }
 
+    public Integer getInstallmentNumber() {
+        return this.installmentNumber;
+    }
+
+    public LocalDate getFromDate() {
+        return this.fromDate;
+    }
+
+    public LocalDate getDueDate() {
+        return this.dueDate;
+    }
+
+    public BigDecimal getPrincipal() {
+        return this.principal;
+    }
+
+    public BigDecimal getInterestCharged() {
+        return this.interestCharged;
+    }
+
+    public BigDecimal getFeeChargesCharged() {
+        return this.feeChargesCharged;
+    }
+
+    public BigDecimal getPenaltyCharges() {
+        return this.penaltyCharges;
+    }
+
+    public Integer getVersion() {
+        return this.version;
+    }
+
 }

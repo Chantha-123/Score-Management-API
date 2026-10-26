@@ -27,13 +27,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -148,6 +151,8 @@ import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.group.domain.Group;
 import org.apache.fineract.portfolio.group.exception.GroupNotActiveException;
 import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
+import org.apache.fineract.portfolio.loanaccount.batchprincipalpaydown.domain.LoanBatchPrincipalPaydownAudit;
+import org.apache.fineract.portfolio.loanaccount.batchprincipalpaydown.domain.LoanBatchPrincipalPaydownAuditRepository;
 import org.apache.fineract.portfolio.loanaccount.command.LoanUpdateCommand;
 import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.data.LoanChargeData;
@@ -187,6 +192,7 @@ import org.apache.fineract.portfolio.loanaccount.exception.InstallmentNotFoundEx
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidLoanTransactionTypeException;
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidPaidInAdvanceAmountException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanForeclosureException;
+import org.apache.fineract.portfolio.loanaccount.exception.LoanPayoffException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanMultiDisbursementException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerUnassignmentException;
@@ -196,6 +202,8 @@ import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementData
 import org.apache.fineract.portfolio.loanaccount.guarantor.service.GuarantorDomainService;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.data.OverdueLoanScheduleData;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.DefaultScheduledDateGenerator;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepaymentScheduleHistory;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanRepaymentScheduleHistoryRepository;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
@@ -269,6 +277,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanRepository loanRepository;
     private final RepaymentWithPostDatedChecksAssembler repaymentWithPostDatedChecksAssembler;
     private final PostDatedChecksRepository postDatedChecksRepository;
+    private final LoanBatchPrincipalPaydownAuditRepository loanBatchPrincipalPaydownAuditRepository;
+    private final LoanRepaymentScheduleHistoryRepository loanRepaymentScheduleHistoryRepository;
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
         final List<LoanStatus> allowedLoanStatuses = Arrays.asList(LoanStatus.values());
@@ -1033,6 +1043,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
         final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
 
+        if (transactionToAdjust.isBatchPrincipalPaydown()) {
+            undoBatchPrincipalPaydown(loan, transactionToAdjust, transactionAmount);
+        }
+
         final Map<String, Object> changes = new LinkedHashMap<>();
         changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
         changes.put("transactionAmount", command.stringValueOfParameterNamed("transactionAmount"));
@@ -1137,6 +1151,61 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(transactionId)
                 .withOfficeId(loan.getOfficeId()).withClientId(loan.getClientId()).withGroupId(loan.getGroupId()).withLoanId(loanId)
                 .with(changes).build();
+    }
+
+    /**
+     * Restores the schedule to its exact pre-paydown shape before a BATCH_PRINCIPAL_PAYDOWN transaction is reversed
+     * by the standard {@code loan.adjustExistingTransaction(...)} path below. Without this, that path would zero out
+     * the payment while leaving the reamortized (reduced-principal, re-dated) schedule in place.
+     */
+    private void undoBatchPrincipalPaydown(final Loan loan, final LoanTransaction transactionToAdjust, final BigDecimal transactionAmount) {
+
+        if (transactionAmount == null || BigDecimal.ZERO.compareTo(transactionAmount) != 0) {
+            throw new PlatformServiceUnavailableException("error.msg.loan.batchprincipalpaydown.undo.amount.must.be.zero",
+                    "A batch principal paydown transaction can only be fully reversed (transactionAmount = 0), not partially adjusted",
+                    transactionToAdjust.getId());
+        }
+
+        final LoanBatchPrincipalPaydownAudit audit = this.loanBatchPrincipalPaydownAuditRepository
+                .findByLoanTransaction_Id(transactionToAdjust.getId())
+                .orElseThrow(() -> new PlatformServiceUnavailableException("error.msg.loan.batchprincipalpaydown.undo.audit.not.found",
+                        "No batch principal paydown audit record found for transaction", transactionToAdjust.getId()));
+
+        final LoanTransaction latestNonReversedTransaction = loan.getLoanTransactions().stream().filter(LoanTransaction::isNotReversed)
+                .max(Comparator.comparing(LoanTransaction::getTransactionDate).thenComparing(LoanTransaction::getId))
+                .orElse(null);
+        if (latestNonReversedTransaction == null || !latestNonReversedTransaction.getId().equals(transactionToAdjust.getId())) {
+            throw new PlatformServiceUnavailableException("error.msg.loan.batchprincipalpaydown.undo.not.latest.transaction",
+                    "A batch principal paydown can only be undone while it is still the loan's most recent transaction; "
+                            + "reverse any later transactions first",
+                    transactionToAdjust.getId());
+        }
+
+        final List<LoanRepaymentScheduleHistory> archivedInstallments = this.loanRepaymentScheduleHistoryRepository
+                .findByLoan_IdAndVersion(loan.getId(), audit.getScheduleHistoryVersion());
+        final Map<Integer, LoanRepaymentScheduleHistory> archiveByInstallmentNumber = archivedInstallments.stream()
+                .collect(Collectors.toMap(LoanRepaymentScheduleHistory::getInstallmentNumber, history -> history));
+        final MonetaryCurrency currency = loan.getCurrency();
+
+        for (final LoanRepaymentScheduleInstallment installment : loan.getRepaymentScheduleInstallments()) {
+            final LoanRepaymentScheduleHistory archived = archiveByInstallmentNumber.get(installment.getInstallmentNumber());
+            if (archived == null) {
+                continue;
+            }
+            final boolean changed = !Objects.equals(installment.getDueDate(), archived.getDueDate())
+                    || installment.getPrincipal(currency).getAmount().compareTo(archived.getPrincipal()) != 0
+                    || installment.getInterestCharged(currency).getAmount().compareTo(archived.getInterestCharged()) != 0;
+            if (changed) {
+                installment.updateFromDate(archived.getFromDate());
+                installment.updateDueDate(archived.getDueDate());
+                installment.updatePrincipal(archived.getPrincipal());
+                installment.updateInterestCharged(archived.getInterestCharged());
+                installment.resetDerivedComponents();
+            }
+        }
+        loan.updateLoanScheduleDependentDerivedFields();
+
+        this.loanBatchPrincipalPaydownAuditRepository.delete(audit);
     }
 
     @Transactional
@@ -3265,6 +3334,38 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 loanRescheduleRequest);
 
         final Map<String, Object> modifications = this.loanAccountDomainService.foreCloseLoan(loan, transactionDate, noteText);
+        changes.putAll(modifications);
+
+        final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();
+        return commandProcessingResultBuilder.withLoanId(loanId) //
+                .with(changes) //
+                .build();
+    }
+
+    @Override
+    public CommandProcessingResult payoffLoan(final Long loanId, final JsonCommand command) {
+        final String json = command.json();
+        final JsonElement element = fromApiJsonHelper.parse(json);
+        final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.transactionDateParamName, element);
+        this.loanEventApiJsonValidator.validateLoanPayoff(command.json());
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        changes.put("transactionDate", transactionDate);
+
+        String noteText = this.fromApiJsonHelper.extractStringNamed(LoanApiConstants.noteParamName, element);
+        for (LoanDisbursementDetails loanDisbursementDetails : loan.getDisbursementDetails()) {
+            if (!loanDisbursementDetails.expectedDisbursementDateAsLocalDate().isAfter(transactionDate)
+                    && loanDisbursementDetails.actualDisbursementDate() == null) {
+                final String defaultUserMessage = "The loan with undisbrsed tranche before payoff cannot be paid off.";
+                throw new LoanPayoffException("loan.with.undisbursed.tranche.before.payoff.cannot.be.paid.off", defaultUserMessage,
+                        transactionDate);
+            }
+        }
+        LoanRescheduleRequest loanRescheduleRequest = null;
+        this.loanScheduleHistoryWritePlatformService.createAndSaveLoanScheduleArchive(loan.getRepaymentScheduleInstallments(), loan,
+                loanRescheduleRequest);
+
+        final Map<String, Object> modifications = this.loanAccountDomainService.payoffLoan(loan, transactionDate, noteText);
         changes.putAll(modifications);
 
         final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();

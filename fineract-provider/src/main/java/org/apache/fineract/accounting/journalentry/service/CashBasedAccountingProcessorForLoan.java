@@ -202,6 +202,7 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
         final BigDecimal feesAmount = loanTransactionDTO.getFees();
         final BigDecimal penaltiesAmount = loanTransactionDTO.getPenalties();
         final BigDecimal overPaymentAmount = loanTransactionDTO.getOverPayment();
+        final BigDecimal payoffChargeAmount = loanTransactionDTO.getPayoffCharge();
         final boolean isReversal = loanTransactionDTO.isReversed();
         final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
 
@@ -237,6 +238,12 @@ public class CashBasedAccountingProcessorForLoan implements AccountingProcessorF
             totalDebitAmount = totalDebitAmount.add(overPaymentAmount);
             this.helper.createCreditJournalEntryOrReversalForLoan(office, currencyCode, CashAccountsForLoan.OVERPAYMENT, loanProductId,
                     paymentTypeId, loanId, transactionId, transactionDate, overPaymentAmount, isReversal);
+        }
+
+        if (payoffChargeAmount != null && !(payoffChargeAmount.compareTo(BigDecimal.ZERO) == 0)) {
+            totalDebitAmount = totalDebitAmount.add(payoffChargeAmount);
+            this.helper.createCreditJournalEntryOrReversalForLoan(office, currencyCode, CashAccountsForLoan.EARLY_PAYOFF_CHARGE_INCOME,
+                    loanProductId, paymentTypeId, loanId, transactionId, transactionDate, payoffChargeAmount, isReversal);
         }
 
         /*** create a single debit entry (or reversal) for the entire amount **/

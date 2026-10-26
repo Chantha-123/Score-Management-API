@@ -187,6 +187,7 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
         final BigDecimal feesAmount = loanTransactionDTO.getFees();
         final BigDecimal penaltiesAmount = loanTransactionDTO.getPenalties();
         final BigDecimal overPaymentAmount = loanTransactionDTO.getOverPayment();
+        final BigDecimal payoffChargeAmount = loanTransactionDTO.getPayoffCharge();
         final Long paymentTypeId = loanTransactionDTO.getPaymentTypeId();
         final boolean isReversal = loanTransactionDTO.isReversed();
 
@@ -269,6 +270,19 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
                 accountMap.put(account, amount);
             } else {
                 accountMap.put(account, overPaymentAmount);
+            }
+        }
+
+        // early-payoff surcharge was never accrued, so it is recognised straight to income (no receivable to clear)
+        if (payoffChargeAmount != null && !(payoffChargeAmount.compareTo(BigDecimal.ZERO) == 0)) {
+            totalDebitAmount = totalDebitAmount.add(payoffChargeAmount);
+            GLAccount account = this.helper.getLinkedGLAccountForLoanProduct(loanProductId,
+                    AccrualAccountsForLoan.EARLY_PAYOFF_CHARGE_INCOME.getValue(), paymentTypeId);
+            if (accountMap.containsKey(account)) {
+                BigDecimal amount = accountMap.get(account).add(payoffChargeAmount);
+                accountMap.put(account, amount);
+            } else {
+                accountMap.put(account, payoffChargeAmount);
             }
         }
 

@@ -2231,6 +2231,43 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 paymentTypeOptions, null, null, null, outstandingLoanBalance, isReversed);
     }
 
+    @Override
+    public LoanTransactionData retrieveLoanPayoffTemplate(final Long loanId, final LocalDate transactionDate) {
+        this.context.authenticatedUser();
+
+        final Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanId, true);
+        loan.validateForPayoff(transactionDate);
+        final MonetaryCurrency currency = loan.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+
+        final CurrencyData currencyData = applicationCurrency.toData();
+
+        final LocalDate earliestUnpaidInstallmentDate = DateUtils.getBusinessLocalDate();
+
+        final LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment = loan.fetchLoanForeclosureDetail(transactionDate);
+        BigDecimal unrecognizedIncomePortion = null;
+        final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(LoanTransactionType.REPAYMENT);
+        final Collection<PaymentTypeData> paymentTypeOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes();
+        final BigDecimal outstandingLoanBalance = loanRepaymentScheduleInstallment.getPrincipalOutstanding(currency).getAmount();
+        final Boolean isReversed = false;
+
+        // preview total includes the early-payoff surcharge on top of principal + accrued interest + fees/penalties
+        final Money payoffSubtotal = loanRepaymentScheduleInstallment.getTotalOutstanding(currency);
+        final Money payoffCharge = loan.calculateEarlyPayoffCharge(payoffSubtotal);
+        final Money outStandingAmount = payoffSubtotal.plus(payoffCharge);
+
+        // NOTE: payoffCharge is folded into the top-level `amount` total above; the individual
+        // principal/interest/fee/penalty breakdown fields below intentionally mirror the schedule-only amounts
+        // (the surcharge has no natural slot in this shared DTO shape - see docs/loan-module-notes.md)
+        return new LoanTransactionData(null, null, null, transactionType, null, currencyData, earliestUnpaidInstallmentDate,
+                outStandingAmount.getAmount(), loan.getNetDisbursalAmount(),
+                loanRepaymentScheduleInstallment.getPrincipalOutstanding(currency).getAmount(),
+                loanRepaymentScheduleInstallment.getInterestOutstanding(currency).getAmount(),
+                loanRepaymentScheduleInstallment.getFeeChargesOutstanding(currency).getAmount(),
+                loanRepaymentScheduleInstallment.getPenaltyChargesOutstanding(currency).getAmount(), null, unrecognizedIncomePortion,
+                paymentTypeOptions, null, null, null, outstandingLoanBalance, isReversed);
+    }
+
     private static final class CurrencyMapper implements RowMapper<CurrencyData> {
 
         @Override

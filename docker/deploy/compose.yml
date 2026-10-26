@@ -1,0 +1,93 @@
+# Image-only stack for a testing laptop: no source checkout or build needed.
+# Images come from docker/build-images.ps1 (docker load images/score-images.tar).
+#
+#   UI : http://<host>:9002/                      (API proxied same-origin, no cert prompt)
+#   UI : http://localhost:9002/?baseApiUrl=https://localhost:8443/fineract-provider/api/v1
+#   API: https://<host>:8443/fineract-provider     (self-signed cert, accept it once per browser)
+name: ${PROJECT_NAME:-score-test}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  db:
+    image: ${DB_IMAGE:-mini-pawnshop-db}:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - database:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    logging: *logging
+
+  api:
+    image: ${API_IMAGE:-mini-pawnshop-api}:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    init: true
+    environment:
+      FINERACT_NODE_ID: 1
+      # Fineract's own TLS with the bundled self-signed keystore.jks, matching
+      # the baseApiUrl=https://localhost:8443/... links testers already use.
+      FINERACT_SERVER_PORT: 8443
+      FINERACT_SERVER_SSL_ENABLED: "true"
+      FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME: org.mariadb.jdbc.Driver
+      FINERACT_HIKARI_JDBC_URL: jdbc:mariadb://db:3306/fineract_tenants
+      FINERACT_HIKARI_USERNAME: fineract
+      FINERACT_HIKARI_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      FINERACT_DEFAULT_TENANTDB_HOSTNAME: db
+      FINERACT_DEFAULT_TENANTDB_PORT: 3306
+      FINERACT_DEFAULT_TENANTDB_UID: fineract
+      FINERACT_DEFAULT_TENANTDB_PWD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      FINERACT_DEFAULT_TENANTDB_NAME: fineract_default
+      FINERACT_DEFAULT_TENANTDB_IDENTIFIER: default
+      FINERACT_DEFAULT_TENANTDB_TIMEZONE: ${TENANT_TIMEZONE:-Asia/Bangkok}
+      JAVA_TOOL_OPTIONS: >-
+        -Xmx${API_HEAP:-2g} -Duser.home=/data -Duser.timezone=UTC -Dfile.encoding=UTF-8
+        --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
+        --add-opens=java.base/java.lang=ALL-UNNAMED
+        --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+        --add-opens=java.base/java.io=ALL-UNNAMED
+        --add-opens=java.base/java.security=ALL-UNNAMED
+        --add-opens=java.base/java.util=ALL-UNNAMED
+        --add-opens=java.management/javax.management=ALL-UNNAMED
+        --add-opens=java.naming/javax.naming=ALL-UNNAMED
+    volumes:
+      - documents:/data
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${API_PORT:-8443}:8443"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --insecure, https://localhost:8443/fineract-provider/actuator/health]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 120s
+    stop_grace_period: 60s
+    logging: *logging
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-mini-pawnshop-frontend}:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: https://api:8443
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${WEB_PORT:-9002}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  database:
+  documents:

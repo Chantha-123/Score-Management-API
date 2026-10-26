@@ -129,6 +129,13 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
     @Column(name = "is_equal_amortization", nullable = false)
     private boolean isEqualAmortization = false;
 
+    // stored as plain Integer (not @Enumerated) so persistence is not tied to enum declaration order
+    @Column(name = "early_payoff_charge_calculation_enum", nullable = true)
+    private Integer earlyPayoffChargeCalculationType;
+
+    @Column(name = "early_payoff_charge_amount", scale = 6, precision = 19, nullable = true)
+    private BigDecimal earlyPayoffChargeAmount;
+
     public static LoanProductRelatedDetail createFrom(final MonetaryCurrency currency, final BigDecimal principal,
             final BigDecimal nominalInterestRatePerPeriod, final PeriodFrequencyType interestRatePeriodFrequencyType,
             final BigDecimal nominalAnnualInterestRate, final InterestMethod interestMethod,
@@ -507,6 +514,22 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
             this.isEqualAmortization = newValue;
         }
 
+        final String earlyPayoffChargeCalculationTypeParamName = LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME;
+        if (command.isChangeInIntegerParameterNamed(earlyPayoffChargeCalculationTypeParamName, this.earlyPayoffChargeCalculationType)) {
+            final Integer newValue = command.integerValueOfParameterNamed(earlyPayoffChargeCalculationTypeParamName);
+            actualChanges.put(earlyPayoffChargeCalculationTypeParamName, newValue);
+            actualChanges.put("locale", localeAsInput);
+            this.earlyPayoffChargeCalculationType = newValue;
+        }
+
+        final String earlyPayoffChargeAmountParamName = LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME;
+        if (command.isChangeInBigDecimalParameterNamed(earlyPayoffChargeAmountParamName, this.earlyPayoffChargeAmount)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(earlyPayoffChargeAmountParamName);
+            actualChanges.put(earlyPayoffChargeAmountParamName, newValue);
+            actualChanges.put("locale", localeAsInput);
+            this.earlyPayoffChargeAmount = newValue;
+        }
+
         validateRepaymentPeriodWithGraceSettings();
 
         return actualChanges;
@@ -674,5 +697,22 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
 
     public void setNominalInterestRatePerPeriod(BigDecimal nominalInterestRatePerPeriod) {
         this.nominalInterestRatePerPeriod = nominalInterestRatePerPeriod;
+    }
+
+    public EarlyPayoffChargeCalculationType getEarlyPayoffChargeCalculationType() {
+        return EarlyPayoffChargeCalculationType.fromInt(this.earlyPayoffChargeCalculationType);
+    }
+
+    public void setEarlyPayoffChargeCalculationType(final EarlyPayoffChargeCalculationType earlyPayoffChargeCalculationType) {
+        this.earlyPayoffChargeCalculationType = earlyPayoffChargeCalculationType == null ? null
+                : earlyPayoffChargeCalculationType.getValue();
+    }
+
+    public BigDecimal getEarlyPayoffChargeAmount() {
+        return this.earlyPayoffChargeAmount;
+    }
+
+    public void setEarlyPayoffChargeAmount(final BigDecimal earlyPayoffChargeAmount) {
+        this.earlyPayoffChargeAmount = earlyPayoffChargeAmount;
     }
 }

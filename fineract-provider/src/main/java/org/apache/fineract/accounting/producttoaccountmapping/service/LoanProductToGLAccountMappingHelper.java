@@ -241,6 +241,9 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
                         changes);
                 mergeLoanToIncomeAccountMappingChanges(element, LoanProductAccountingParams.INCOME_FROM_RECOVERY.getValue(), loanProductId,
                         CashAccountsForLoan.INCOME_FROM_RECOVERY.getValue(), CashAccountsForLoan.INCOME_FROM_RECOVERY.toString(), changes);
+                mergeLoanToIncomeAccountMappingChanges(element, LoanProductAccountingParams.EARLY_PAYOFF_CHARGE_INCOME.getValue(),
+                        loanProductId, CashAccountsForLoan.EARLY_PAYOFF_CHARGE_INCOME.getValue(),
+                        CashAccountsForLoan.EARLY_PAYOFF_CHARGE_INCOME.toString(), changes);
 
                 // expenses
                 mergeLoanToExpenseAccountMappingChanges(element, LoanProductAccountingParams.LOSSES_WRITTEN_OFF.getValue(), loanProductId,
@@ -283,6 +286,9 @@ public class LoanProductToGLAccountMappingHelper extends ProductToGLAccountMappi
                 mergeLoanToIncomeAccountMappingChanges(element, LoanProductAccountingParams.INCOME_FROM_RECOVERY.getValue(), loanProductId,
                         AccrualAccountsForLoan.INCOME_FROM_RECOVERY.getValue(), AccrualAccountsForLoan.INCOME_FROM_RECOVERY.toString(),
                         changes);
+                mergeLoanToIncomeAccountMappingChanges(element, LoanProductAccountingParams.EARLY_PAYOFF_CHARGE_INCOME.getValue(),
+                        loanProductId, AccrualAccountsForLoan.EARLY_PAYOFF_CHARGE_INCOME.getValue(),
+                        AccrualAccountsForLoan.EARLY_PAYOFF_CHARGE_INCOME.toString(), changes);
 
                 // expenses
                 mergeLoanToExpenseAccountMappingChanges(element, LoanProductAccountingParams.LOSSES_WRITTEN_OFF.getValue(), loanProductId,

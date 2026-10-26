@@ -370,7 +370,13 @@ public class LoanProduct extends AbstractPersistableCustom {
 
         final Integer overAppliedNumber = command.integerValueOfParameterNamed(LoanProductConstants.OVER_APPLIED_NUMBER);
 
-        return new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, currency, principal, minPrincipal,
+        final EarlyPayoffChargeCalculationType earlyPayoffChargeCalculationType = EarlyPayoffChargeCalculationType
+                .fromInt(command.integerValueOfParameterNamed(LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME));
+        final BigDecimal earlyPayoffChargeAmount = command
+                .bigDecimalValueOfParameterNamed(LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME);
+
+        final LoanProduct loanProduct = new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, currency,
+                principal, minPrincipal,
                 maxPrincipal, interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod, interestFrequencyType,
                 annualInterestRate, interestMethod, interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, repaymentEvery,
                 repaymentFrequencyType, numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment,
@@ -387,6 +393,10 @@ public class LoanProduct extends AbstractPersistableCustom {
                 isEqualAmortization, productRates, fixedPrincipalPercentagePerInstallment, disallowExpectedDisbursements,
                 allowApprovedDisbursedAmountsOverApplied, overAppliedCalculationType, overAppliedNumber);
 
+        loanProduct.loanProductRelatedDetail.setEarlyPayoffChargeCalculationType(earlyPayoffChargeCalculationType);
+        loanProduct.loanProductRelatedDetail.setEarlyPayoffChargeAmount(earlyPayoffChargeAmount);
+
+        return loanProduct;
     }
 
     public void updateLoanProductInRelatedClasses() {

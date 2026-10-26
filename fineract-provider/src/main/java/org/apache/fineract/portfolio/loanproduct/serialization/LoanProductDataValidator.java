@@ -45,6 +45,7 @@ import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
+import org.apache.fineract.portfolio.loanproduct.domain.EarlyPayoffChargeCalculationType;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestRecalculationCompoundingMethod;
@@ -80,7 +81,8 @@ public final class LoanProductDataValidator {
             LoanProductAccountingParams.GOODWILL_CREDIT.getValue(), LoanProductAccountingParams.PENALTIES_RECEIVABLE.getValue(),
             LoanProductAccountingParams.PAYMENT_CHANNEL_FUND_SOURCE_MAPPING.getValue(),
             LoanProductAccountingParams.FEE_INCOME_ACCOUNT_MAPPING.getValue(), LoanProductAccountingParams.INCOME_FROM_RECOVERY.getValue(),
-            LoanProductAccountingParams.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(), LoanProductConstants.USE_BORROWER_CYCLE_PARAMETER_NAME,
+            LoanProductAccountingParams.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(),
+            LoanProductAccountingParams.EARLY_PAYOFF_CHARGE_INCOME.getValue(), LoanProductConstants.USE_BORROWER_CYCLE_PARAMETER_NAME,
             LoanProductConstants.PRINCIPAL_VARIATIONS_FOR_BORROWER_CYCLE_PARAMETER_NAME,
             LoanProductConstants.INTEREST_RATE_VARIATIONS_FOR_BORROWER_CYCLE_PARAMETER_NAME,
             LoanProductConstants.NUMBER_OF_REPAYMENT_VARIATIONS_FOR_BORROWER_CYCLE_PARAMETER_NAME, LoanProductConstants.SHORT_NAME,
@@ -111,7 +113,8 @@ public final class LoanProductDataValidator {
             LoanProductConstants.CAN_USE_FOR_TOPUP, LoanProductConstants.IS_EQUAL_AMORTIZATION_PARAM, LoanProductConstants.RATES_PARAM_NAME,
             LoanProductConstants.fixedPrincipalPercentagePerInstallmentParamName, LoanProductConstants.DISALLOW_EXPECTED_DISBURSEMENTS,
             LoanProductConstants.ALLOW_APPROVED_DISBURSED_AMOUNTS_OVER_APPLIED, LoanProductConstants.OVER_APPLIED_CALCULATION_TYPE,
-            LoanProductConstants.OVER_APPLIED_NUMBER));
+            LoanProductConstants.OVER_APPLIED_NUMBER, LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME,
+            LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME));
 
     private static final String[] supportedloanConfigurableAttributes = { LoanProductConstants.amortizationTypeParamName,
             LoanProductConstants.interestTypeParamName, LoanProductConstants.transactionProcessingStrategyIdParamName,
@@ -166,6 +169,8 @@ public final class LoanProductDataValidator {
             baseDataValidator.reset().parameter(LoanProductConstants.MINIMUM_DAYS_BETWEEN_DISBURSAL_AND_FIRST_REPAYMENT)
                     .value(minimumDaysBetweenDisbursalAndFirstRepayment).ignoreIfNull().integerGreaterThanZero();
         }
+
+        validateEarlyPayoffCharge(baseDataValidator, element);
 
         final Boolean includeInBorrowerCycle = this.fromApiJsonHelper.extractBooleanNamed("includeInBorrowerCycle", element);
         baseDataValidator.reset().parameter("includeInBorrowerCycle").value(includeInBorrowerCycle).ignoreIfNull()
@@ -992,6 +997,8 @@ public final class LoanProductDataValidator {
             final Integer inMultiplesOf = this.fromApiJsonHelper.extractIntegerNamed("inMultiplesOf", element, Locale.getDefault());
             baseDataValidator.reset().parameter("inMultiplesOf").value(inMultiplesOf).ignoreIfNull().integerZeroOrGreater();
         }
+
+        validateEarlyPayoffCharge(baseDataValidator, element);
 
         final String minPrincipalParameterName = "minPrincipal";
         BigDecimal minPrincipalAmount = null;
@@ -2086,6 +2093,29 @@ public final class LoanProductDataValidator {
                 }
             }
 
+        }
+    }
+
+    private void validateEarlyPayoffCharge(final DataValidatorBuilder baseDataValidator, final JsonElement element) {
+        Integer earlyPayoffChargeCalculationTypeValue = null;
+        if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME, element)) {
+            earlyPayoffChargeCalculationTypeValue = this.fromApiJsonHelper
+                    .extractIntegerNamed(LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME, element, Locale.getDefault());
+            baseDataValidator.reset().parameter(LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME)
+                    .value(earlyPayoffChargeCalculationTypeValue).ignoreIfNull().inMinMaxRange(1, 2);
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME, element)) {
+            final BigDecimal earlyPayoffChargeAmount = this.fromApiJsonHelper
+                    .extractBigDecimalWithLocaleNamed(LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME, element);
+            final EarlyPayoffChargeCalculationType calculationType = EarlyPayoffChargeCalculationType
+                    .fromInt(earlyPayoffChargeCalculationTypeValue);
+            baseDataValidator.reset().parameter(LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME).value(earlyPayoffChargeAmount)
+                    .ignoreIfNull().positiveAmount();
+            if (calculationType != null && calculationType.isPercentOfTotalPayoff() && earlyPayoffChargeAmount != null) {
+                baseDataValidator.reset().parameter(LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME)
+                        .value(earlyPayoffChargeAmount).inMinMaxRange(0, 100);
+            }
         }
     }
 }

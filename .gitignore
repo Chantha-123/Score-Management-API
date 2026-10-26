@@ -26,3 +26,11 @@ licenses
 **/.asciidoctor/diagram/*
 **/images/diag-*.svg
 CLAUDE.md
+.env
+.env.*
+!.env*.example
+docker/*.log
+docker/deploy/images/
+
+# Build/deploy archives
+docker/*.zip

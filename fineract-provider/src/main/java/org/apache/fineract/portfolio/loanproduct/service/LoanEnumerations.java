@@ -443,6 +443,10 @@ public final class LoanEnumerations {
                 optionData = new LoanTransactionEnumData(LoanTransactionType.GOODWILL_CREDIT.getValue().longValue(),
                         LoanTransactionType.GOODWILL_CREDIT.getCode(), "Goodwill Credit");
             break;
+            case BATCH_PRINCIPAL_PAYDOWN:
+                optionData = new LoanTransactionEnumData(LoanTransactionType.BATCH_PRINCIPAL_PAYDOWN.getValue().longValue(),
+                        LoanTransactionType.BATCH_PRINCIPAL_PAYDOWN.getCode(), "Batch Principal Paydown");
+            break;
         }
         return optionData;
     }

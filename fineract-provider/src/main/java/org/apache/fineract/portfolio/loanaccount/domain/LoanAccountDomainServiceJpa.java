@@ -277,6 +277,8 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
             repaymentEvent = new LoanTransactionPayoutRefundPreBusinessEvent(loan);
         } else if (repaymentTransactionType.isGoodwillCredit()) {
             repaymentEvent = new LoanTransactionGoodwillCreditPreBusinessEvent(loan);
+        } else if (repaymentTransactionType.isBatchPrincipalPaydown()) {
+            repaymentEvent = new LoanTransactionMakeRepaymentPreBusinessEvent(loan);
         } else if (isRecoveryRepayment) {
             repaymentEvent = new LoanTransactionRecoveryPaymentPreBusinessEvent(loan);
         }
@@ -294,6 +296,8 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
             repaymentEvent = new LoanTransactionPayoutRefundPostBusinessEvent(transaction);
         } else if (repaymentTransactionType.isGoodwillCredit()) {
             repaymentEvent = new LoanTransactionGoodwillCreditPostBusinessEvent(transaction);
+        } else if (repaymentTransactionType.isBatchPrincipalPaydown()) {
+            repaymentEvent = new LoanTransactionMakeRepaymentPostBusinessEvent(transaction);
         } else if (isRecoveryRepayment) {
             repaymentEvent = new LoanTransactionRecoveryPaymentPostBusinessEvent(transaction);
         }
@@ -803,6 +807,103 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
         businessEventNotifierService.notifyPostBusinessEvent(new LoanForeClosurePostBusinessEvent(payment));
         return changes;
 
+    }
+
+    @Override
+    public Map<String, Object> payoffLoan(final Loan loan, final LocalDate payoffDate, final String noteText) {
+        MonetaryCurrency currency = loan.getCurrency();
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        List<LoanTransaction> newTransactions = new ArrayList<>();
+
+        final List<Long> existingTransactionIds = new ArrayList<>();
+        final List<Long> existingReversedTransactionIds = new ArrayList<>();
+        existingTransactionIds.addAll(loan.findExistingTransactionIds());
+        existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
+        final ScheduleGeneratorDTO scheduleGeneratorDTO = null;
+        // payoff quote uses the same day-prorated calculation as foreclosure - interest/fee/penalty never accrue
+        // past payoffDate, even when paying off before any scheduled installment due date
+        final LoanRepaymentScheduleInstallment payoffDetail = loan.fetchLoanForeclosureDetail(payoffDate);
+        if (loan.isPeriodicAccrualAccountingEnabledOnLoanProduct()
+                && (loan.getAccruedTill() == null || !payoffDate.isEqual(loan.getAccruedTill()))) {
+            // reconcile the accrual ledger to the same cutoff as the quote: reverse anything posted after payoffDate,
+            // then post one catch-up ACCRUAL transaction for the gap between what's already accrued and what's due
+            loan.reverseAccrualsAfter(payoffDate);
+            Money[] accruedReceivables = loan.getReceivableIncome(payoffDate);
+            Money interestPortion = payoffDetail.getInterestCharged(currency).minus(accruedReceivables[0]);
+            Money feePortion = payoffDetail.getFeeChargesCharged(currency).minus(accruedReceivables[1]);
+            Money penaltyPortion = payoffDetail.getPenaltyChargesCharged(currency).minus(accruedReceivables[2]);
+            Money total = interestPortion.plus(feePortion).plus(penaltyPortion);
+            if (total.isGreaterThanZero()) {
+                LoanTransaction accrualTransaction = LoanTransaction.accrueTransaction(loan, loan.getOffice(), payoffDate,
+                        total.getAmount(), interestPortion.getAmount(), feePortion.getAmount(), penaltyPortion.getAmount());
+                LocalDate fromDate = loan.getDisbursementDate();
+                if (loan.getAccruedTill() != null) {
+                    fromDate = loan.getAccruedTill();
+                }
+                newTransactions.add(accrualTransaction);
+                loan.addLoanTransaction(accrualTransaction);
+                Set<LoanChargePaidBy> accrualCharges = accrualTransaction.getLoanChargesPaid();
+                for (LoanCharge loanCharge : loan.charges()) {
+                    if (loanCharge.isActive() && !loanCharge.isPaid()
+                            && (loanCharge.isDueForCollectionFromAndUpToAndIncluding(fromDate, payoffDate)
+                                    || loanCharge.isInstalmentFee())) {
+                        final LoanChargePaidBy loanChargePaidBy = new LoanChargePaidBy(accrualTransaction, loanCharge,
+                                loanCharge.getAmountOutstanding(currency).getAmount(), null);
+                        accrualCharges.add(loanChargePaidBy);
+                    }
+                }
+            }
+        }
+
+        Money interestPayable = payoffDetail.getInterestCharged(currency);
+        Money feePayable = payoffDetail.getFeeChargesCharged(currency);
+        Money penaltyPayable = payoffDetail.getPenaltyChargesCharged(currency);
+        Money payPrincipal = payoffDetail.getPrincipal(currency);
+        loan.updateInstallmentsPostDate(payoffDate);
+
+        final Money payoffSubtotal = payPrincipal.plus(interestPayable).plus(feePayable).plus(penaltyPayable);
+        final Money payoffCharge = loan.calculateEarlyPayoffCharge(payoffSubtotal);
+
+        LoanTransaction payment = null;
+
+        if (payoffSubtotal.isGreaterThanZero()) {
+            final PaymentDetail paymentDetail = null;
+            String externalId = null;
+            payment = LoanTransaction.repayment(loan.getOffice(), payoffSubtotal, paymentDetail, payoffDate, externalId);
+            payment.updateLoan(loan);
+            newTransactions.add(payment);
+        }
+
+        List<Long> transactionIds = new ArrayList<>();
+        final ChangedTransactionDetail changedTransactionDetail = loan.handlePayoffTransaction(payment, defaultLoanLifecycleStateMachine(),
+                scheduleGeneratorDTO, payoffCharge);
+
+        for (LoanTransaction newTransaction : newTransactions) {
+            saveLoanTransactionWithDataIntegrityViolationChecks(newTransaction);
+            transactionIds.add(newTransaction.getId());
+        }
+        changes.put("transactions", transactionIds);
+        changes.put("eventAmount", payPrincipal.getAmount().negate());
+        changes.put("payoffCharge", payoffCharge.getAmount());
+
+        if (changedTransactionDetail != null) {
+            for (Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                saveLoanTransactionWithDataIntegrityViolationChecks(mapEntry.getValue());
+                loan.getLoanTransactions().add(mapEntry.getValue());
+                updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
+            }
+        }
+
+        saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
+
+        if (StringUtils.isNotBlank(noteText)) {
+            changes.put("note", noteText);
+            final Note note = Note.loanNote(loan, noteText);
+            this.noteRepository.save(note);
+        }
+
+        postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds, false);
+        return changes;
     }
 
     @Override

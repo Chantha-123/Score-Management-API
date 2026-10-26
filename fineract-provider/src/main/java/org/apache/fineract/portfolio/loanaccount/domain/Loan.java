@@ -115,6 +115,7 @@ import org.apache.fineract.portfolio.loanaccount.exception.InvalidRefundDateExce
 import org.apache.fineract.portfolio.loanaccount.exception.LoanApplicationDateException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanDisbursalException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanForeclosureException;
+import org.apache.fineract.portfolio.loanaccount.exception.LoanPayoffException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerAssignmentDateException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerUnassignmentDateException;
@@ -131,6 +132,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanSchedul
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
+import org.apache.fineract.portfolio.loanproduct.domain.EarlyPayoffChargeCalculationType;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestRecalculationCompoundingMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
@@ -6647,6 +6649,68 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         this.loanSubStatus = LoanSubStatus.FORECLOSED.getValue();
         applyAccurals();
         return handleRepaymentOrRecoveryOrWaiverTransaction(repaymentTransaction, loanLifecycleStateMachine, null, scheduleGeneratorDTO);
+    }
+
+    public ChangedTransactionDetail handlePayoffTransaction(final LoanTransaction repaymentTransaction,
+            final LoanLifecycleStateMachine loanLifecycleStateMachine, final ScheduleGeneratorDTO scheduleGeneratorDTO,
+            final Money payoffCharge) {
+
+        LoanEvent event = LoanEvent.LOAN_FORECLOSURE;
+        validateAccountStatus(event);
+        validateForPayoff(repaymentTransaction.getTransactionDate());
+        this.loanSubStatus = LoanSubStatus.PAID_OFF.getValue();
+        applyAccurals();
+        final ChangedTransactionDetail changedTransactionDetail = handleRepaymentOrRecoveryOrWaiverTransaction(repaymentTransaction,
+                loanLifecycleStateMachine, null, scheduleGeneratorDTO);
+        if (payoffCharge != null && payoffCharge.isGreaterThanZero()) {
+            repaymentTransaction.updatePayoffChargePortion(payoffCharge);
+        }
+        return changedTransactionDetail;
+    }
+
+    public void validateForPayoff(final LocalDate transactionDate) {
+
+        if (isInterestRecalculationEnabledForProduct()) {
+            final String defaultUserMessage = "The loan with interest recalculation enabled cannot be paid off early.";
+            throw new LoanPayoffException("loan.with.interest.recalculation.enabled.cannot.be.paid.off", defaultUserMessage, getId());
+        }
+
+        final LocalDate lastUserTransactionDate = getLastUserTransactionDate();
+
+        if (DateUtils.isDateInTheFuture(transactionDate)) {
+            final String defaultUserMessage = "The transactionDate cannot be in the future.";
+            throw new LoanPayoffException("loan.payoff.transaction.date.is.in.future", defaultUserMessage, transactionDate);
+        }
+
+        if (lastUserTransactionDate.isAfter(transactionDate)) {
+            final String defaultUserMessage = "The transactionDate cannot be before the last transaction date.";
+            throw new LoanPayoffException("loan.payoff.transaction.date.cannot.before.the.last.transaction.date", defaultUserMessage,
+                    transactionDate);
+        }
+    }
+
+    /**
+     * Computes the early-payoff surcharge configured on the loan product, based on the payoff subtotal (principal +
+     * accrued interest + outstanding fees/penalties as of the payoff date).
+     */
+    public Money calculateEarlyPayoffCharge(final Money payoffSubtotal) {
+        final MonetaryCurrency currency = getCurrency();
+        final EarlyPayoffChargeCalculationType calculationType = this.loanRepaymentScheduleDetail.getEarlyPayoffChargeCalculationType();
+        final BigDecimal configuredAmount = this.loanRepaymentScheduleDetail.getEarlyPayoffChargeAmount();
+
+        if (calculationType == null || configuredAmount == null || BigDecimal.ZERO.compareTo(configuredAmount) == 0) {
+            return Money.zero(currency);
+        }
+
+        if (calculationType.isPercentOfTotalPayoff()) {
+            final MathContext mc = MoneyHelper.getMathContext();
+            final BigDecimal percentageAmount = payoffSubtotal.getAmount().multiply(configuredAmount, mc)
+                    .divide(BigDecimal.valueOf(100L), mc);
+            return Money.of(currency, percentageAmount);
+        }
+
+        // FLAT
+        return Money.of(currency, configuredAmount);
     }
 
     public Money retrieveAccruedAmountAfterDate(final LocalDate tillDate) {

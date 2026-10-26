@@ -18,10 +18,13 @@
  */
 package org.apache.fineract.portfolio.loanaccount.loanschedule.domain;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface LoanRepaymentScheduleHistoryRepository
         extends JpaRepository<LoanRepaymentScheduleHistory, Long>, JpaSpecificationExecutor<LoanRepaymentScheduleHistory> {
+
+    List<LoanRepaymentScheduleHistory> findByLoan_IdAndVersion(Long loanId, Integer version);
 
 }

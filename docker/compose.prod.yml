@@ -1,0 +1,9 @@
+services:
+  db:
+    restart: unless-stopped
+  api:
+    restart: unless-stopped
+  frontend:
+    restart: unless-stopped
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-9090}:80"

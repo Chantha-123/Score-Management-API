@@ -97,6 +97,10 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom {
     @Column(name = "overpayment_portion_derived", scale = 6, precision = 19, nullable = true)
     private BigDecimal overPaymentPortion;
 
+    // early-payoff surcharge, not allocated against the repayment schedule - set directly after schedule allocation
+    @Column(name = "payoff_charge_portion_derived", scale = 6, precision = 19, nullable = true)
+    private BigDecimal payoffChargePortion;
+
     @Column(name = "unrecognized_income_portion", scale = 6, precision = 19, nullable = true)
     private BigDecimal unrecognizedIncomePortion;
 
@@ -419,6 +423,22 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom {
         this.overPaymentPortion = defaultToNullIfZero(getOverPaymentPortion(currency).plus(overPayment).getAmount());
     }
 
+    /**
+     * Records the early-payoff surcharge on this transaction and adds it to the transaction's cash amount. Must be
+     * called only after the rest of the transaction (principal/interest/fee/penalty) has already been allocated
+     * against the repayment schedule - the payoff charge has no corresponding schedule due amount to allocate
+     * against.
+     */
+    public void updatePayoffChargePortion(final Money payoffCharge) {
+        final MonetaryCurrency currency = payoffCharge.getCurrency();
+        this.payoffChargePortion = defaultToNullIfZero(getPayoffChargePortion(currency).plus(payoffCharge).getAmount());
+        this.amount = getAmount(currency).plus(payoffCharge).getAmount();
+    }
+
+    public Money getPayoffChargePortion(final MonetaryCurrency currency) {
+        return Money.of(currency, this.payoffChargePortion);
+    }
+
     public Money getPrincipalPortion(final MonetaryCurrency currency) {
         return Money.of(currency, this.principalPortion);
     }
@@ -480,7 +500,7 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom {
     }
 
     public boolean isRepaymentType() {
-        return isRepayment() || isMerchantIssuedRefund() || isPayoutRefund() || isGoodwillCredit();
+        return isRepayment() || isMerchantIssuedRefund() || isPayoutRefund() || isGoodwillCredit() || isBatchPrincipalPaydown();
     }
 
     public boolean isRepayment() {
@@ -497,6 +517,10 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom {
 
     public boolean isGoodwillCredit() {
         return LoanTransactionType.GOODWILL_CREDIT.equals(getTypeOf()) && isNotReversed();
+    }
+
+    public boolean isBatchPrincipalPaydown() {
+        return LoanTransactionType.BATCH_PRINCIPAL_PAYDOWN.equals(getTypeOf()) && isNotReversed();
     }
 
     public boolean isNotRepaymentType() {
@@ -640,6 +664,7 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom {
         thisTransactionData.put("feeChargesPortion", this.feeChargesPortion);
         thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
         thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
+        thisTransactionData.put("payoffChargePortion", this.payoffChargePortion);
 
         if (this.paymentDetail != null) {
             thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());

@@ -185,6 +185,14 @@ public class LoanTransactionsApiResource {
                 transactionDate = transactionDateParam.getDate("transactionDate", dateFormat, locale);
             }
             transactionData = this.loanReadPlatformService.retrieveLoanForeclosureTemplate(loanId, transactionDate);
+        } else if (is(commandParam, "payoff")) {
+            LocalDate transactionDate = null;
+            if (transactionDateParam == null) {
+                transactionDate = DateUtils.getBusinessLocalDate();
+            } else {
+                transactionDate = transactionDateParam.getDate("transactionDate", dateFormat, locale);
+            }
+            transactionData = this.loanReadPlatformService.retrieveLoanPayoffTemplate(loanId, transactionDate);
         } else if (is(commandParam, "creditBalanceRefund")) {
             transactionData = this.loanReadPlatformService.retrieveCreditBalanceRefundTemplate(loanId);
         } else {
@@ -282,8 +290,14 @@ public class LoanTransactionsApiResource {
         } else if (is(commandParam, "foreclosure")) {
             final CommandWrapper commandRequest = builder.loanForeclosure(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "payoff")) {
+            final CommandWrapper commandRequest = builder.loanPayoff(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "creditBalanceRefund")) {
             final CommandWrapper commandRequest = builder.creditBalanceRefund(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "batchPrincipalPaydown")) {
+            final CommandWrapper commandRequest = builder.loanBatchPrincipalPaydown(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 

@@ -37,7 +37,7 @@ public final class AccountingConstants {
     public enum CashAccountsForLoan {
 
         FUND_SOURCE(1), LOAN_PORTFOLIO(2), INTEREST_ON_LOANS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), LOSSES_WRITTEN_OFF(
-                6), TRANSFERS_SUSPENSE(10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12), GOODWILL_CREDIT(13);
+                6), TRANSFERS_SUSPENSE(10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12), GOODWILL_CREDIT(13), EARLY_PAYOFF_CHARGE_INCOME(14);
 
         private final Integer value;
 
@@ -75,7 +75,7 @@ public final class AccountingConstants {
 
         FUND_SOURCE(1), LOAN_PORTFOLIO(2), INTEREST_ON_LOANS(3), INCOME_FROM_FEES(4), INCOME_FROM_PENALTIES(5), //
         LOSSES_WRITTEN_OFF(6), INTEREST_RECEIVABLE(7), FEES_RECEIVABLE(8), PENALTIES_RECEIVABLE(9), //
-        TRANSFERS_SUSPENSE(10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12), GOODWILL_CREDIT(13);
+        TRANSFERS_SUSPENSE(10), OVERPAYMENT(11), INCOME_FROM_RECOVERY(12), GOODWILL_CREDIT(13), EARLY_PAYOFF_CHARGE_INCOME(14);
 
         private final Integer value;
 
@@ -125,7 +125,8 @@ public final class AccountingConstants {
                                                                                         "penaltyToIncomeAccountMappings"), CHARGE_ID(
                                                                                                 "chargeId"), INCOME_ACCOUNT_ID(
                                                                                                         "incomeAccountId"), INCOME_FROM_RECOVERY(
-                                                                                                                "incomeFromRecoveryAccountId");
+                                                                                                                "incomeFromRecoveryAccountId"), EARLY_PAYOFF_CHARGE_INCOME(
+                                                                                                                        "earlyPayoffChargeIncomeAccountId");
 
         private final String value;
 

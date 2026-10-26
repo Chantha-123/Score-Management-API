@@ -276,6 +276,10 @@ public class LoanAssembler {
         final List<Rate> rates = this.rateAssembler.fromParsedJson(element);
 
         final LoanProductRelatedDetail loanProductRelatedDetail = this.loanScheduleAssembler.assembleLoanProductRelatedDetail(element);
+        // early-payoff charge is product-config-driven only in v1 (no per-application override)
+        loanProductRelatedDetail
+                .setEarlyPayoffChargeCalculationType(loanProduct.getLoanProductRelatedDetail().getEarlyPayoffChargeCalculationType());
+        loanProductRelatedDetail.setEarlyPayoffChargeAmount(loanProduct.getLoanProductRelatedDetail().getEarlyPayoffChargeAmount());
 
         final BigDecimal interestRateDifferential = this.fromApiJsonHelper
                 .extractBigDecimalWithLocaleNamed(LoanApiConstants.interestRateDifferentialParameterName, element);

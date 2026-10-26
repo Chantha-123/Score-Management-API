@@ -70,6 +70,8 @@ public interface LoanAccountDomainService {
 
     Map<String, Object> foreCloseLoan(Loan loan, LocalDate foreClourseDate, String noteText);
 
+    Map<String, Object> payoffLoan(Loan loan, LocalDate payoffDate, String noteText);
+
     /**
      * Disables all standing instructions linked to a closed loan
      *

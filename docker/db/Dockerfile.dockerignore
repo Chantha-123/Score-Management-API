@@ -1,0 +1,4 @@
+# Only the two inputs the DB image needs; keeps the build context tiny.
+*
+!docker/initdb
+!fineract-db/server_collation.cnf

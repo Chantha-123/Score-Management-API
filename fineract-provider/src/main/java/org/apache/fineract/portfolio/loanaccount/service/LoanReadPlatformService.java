@@ -136,6 +136,8 @@ public interface LoanReadPlatformService {
 
     LoanTransactionData retrieveLoanForeclosureTemplate(Long loanId, LocalDate transactionDate);
 
+    LoanTransactionData retrieveLoanPayoffTemplate(Long loanId, LocalDate transactionDate);
+
     LoanAccountData retrieveLoanByLoanAccount(String loanAccountNumber);
 
     Long retrieveLoanIdByAccountNumber(String loanAccountNumber);
