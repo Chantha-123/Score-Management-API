@@ -29,8 +29,8 @@ public class DistrictData implements Serializable {
     private final String nameKhm;
     private final String nameEng;
 
-    public DistrictData(final Long id, final Long provinceId, final String provinceNameEng, final String code,
-            final String nameKhm, final String nameEng) {
+    public DistrictData(final Long id, final Long provinceId, final String provinceNameEng, final String code, final String nameKhm,
+            final String nameEng) {
         this.id = id;
         this.provinceId = provinceId;
         this.provinceNameEng = provinceNameEng;

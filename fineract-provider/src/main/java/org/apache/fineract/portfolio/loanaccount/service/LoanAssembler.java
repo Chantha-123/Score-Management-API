@@ -344,21 +344,17 @@ public class LoanAssembler {
         }
 
         final LoanApplicationTerms loanApplicationTerms = this.loanScheduleAssembler.assembleLoanTerms(element);
-        
+
         BigDecimal chargeRate = BigDecimal.ZERO;
-		
-		for (final LoanCharge loanCharge : loanCharges)
-		{
-			if(loanCharge.getChargeCalculation().isPercentageOfOutstandingAmount() && loanCharge.isInstalmentFee()
-					&& !loanCharge.isPenaltyCharge())
-			{
-				chargeRate = loanCharge.getPercentage();
-			}
-		}
-		loanApplicationTerms.setAnnulaNorminalChargeRate(chargeRate);
-        
-        
-        
+
+        for (final LoanCharge loanCharge : loanCharges) {
+            if (loanCharge.getChargeCalculation().isPercentageOfOutstandingAmount() && loanCharge.isInstalmentFee()
+                    && !loanCharge.isPenaltyCharge()) {
+                chargeRate = loanCharge.getPercentage();
+            }
+        }
+        loanApplicationTerms.setAnnulaNorminalChargeRate(chargeRate);
+
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
         final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loanApplication.getOfficeId(),
                 loanApplicationTerms.getExpectedDisbursementDate(), HolidayStatusType.ACTIVE.getValue());
@@ -369,7 +365,7 @@ public class LoanAssembler {
                 isHolidayEnabled, holidays, workingDays, element, disbursementDetails);
         loanApplication.loanApplicationSubmittal(loanScheduleModel, loanApplicationTerms, defaultLoanLifecycleStateMachine(),
                 submittedOnDate, externalId, allowTransactionsOnHoliday, holidays, workingDays, allowTransactionsOnNonWorkingDay);
-       loanApplication.setSimiPrincipalGrace(semiGracePrincipalGrace);
+        loanApplication.setSimiPrincipalGrace(semiGracePrincipalGrace);
         return loanApplication;
     }
 

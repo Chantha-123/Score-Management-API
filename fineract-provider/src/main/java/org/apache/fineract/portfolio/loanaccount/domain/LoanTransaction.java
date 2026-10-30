@@ -425,9 +425,8 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom {
 
     /**
      * Records the early-payoff surcharge on this transaction and adds it to the transaction's cash amount. Must be
-     * called only after the rest of the transaction (principal/interest/fee/penalty) has already been allocated
-     * against the repayment schedule - the payoff charge has no corresponding schedule due amount to allocate
-     * against.
+     * called only after the rest of the transaction (principal/interest/fee/penalty) has already been allocated against
+     * the repayment schedule - the payoff charge has no corresponding schedule due amount to allocate against.
      */
     public void updatePayoffChargePortion(final Money payoffCharge) {
         final MonetaryCurrency currency = payoffCharge.getCurrency();

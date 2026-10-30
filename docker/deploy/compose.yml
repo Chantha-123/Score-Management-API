@@ -1,5 +1,6 @@
 # Image-only stack for a testing laptop: no source checkout or build needed.
-# Images come from docker/build-images.ps1 (docker load images/score-images.tar).
+# Images are pulled from Docker Hub as ${IMAGE_REPO}:<service>-${IMAGE_TAG}, pushed by
+# docker/build-images.ps1 -Push (offline laptops: start.ps1 -Action load from images/score-images.tar).
 #
 #   UI : http://<host>:9002/                      (API proxied same-origin, no cert prompt)
 #   UI : http://localhost:9002/?baseApiUrl=https://localhost:8443/fineract-provider/api/v1
@@ -14,7 +15,7 @@ x-logging: &logging
 
 services:
   db:
-    image: ${DB_IMAGE:-mini-pawnshop-db}:${IMAGE_TAG:-local}
+    image: ${IMAGE_REPO:-pichoudam/mini_pawnshop_v1}:db-${IMAGE_TAG:?Set IMAGE_TAG in .env}
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
@@ -30,7 +31,7 @@ services:
     logging: *logging
 
   api:
-    image: ${API_IMAGE:-mini-pawnshop-api}:${IMAGE_TAG:-local}
+    image: ${IMAGE_REPO:-pichoudam/mini_pawnshop_v1}:api-${IMAGE_TAG:?Set IMAGE_TAG in .env}
     restart: unless-stopped
     init: true
     environment:
@@ -77,7 +78,7 @@ services:
     logging: *logging
 
   frontend:
-    image: ${FRONTEND_IMAGE:-mini-pawnshop-frontend}:${IMAGE_TAG:-local}
+    image: ${IMAGE_REPO:-pichoudam/mini_pawnshop_v1}:frontend-${IMAGE_TAG:?Set IMAGE_TAG in .env}
     restart: unless-stopped
     environment:
       API_UPSTREAM: https://api:8443

@@ -110,8 +110,7 @@ public class DailySpotRatesApiResource {
     @Operation(tags = { "Daily Spot Rate" }, summary = "Retrieve a Daily Spot Rate", description = "Example Requests:\n\ndailyspotrates/1")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = DailySpotRateData.class))) })
-    public String retrieveOne(
-            @PathParam("dailySpotRateId") @Parameter(description = "dailySpotRateId") final Long dailySpotRateId,
+    public String retrieveOne(@PathParam("dailySpotRateId") @Parameter(description = "dailySpotRateId") final Long dailySpotRateId,
             @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
@@ -125,8 +124,9 @@ public class DailySpotRatesApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(tags = { "Daily Spot Rate" }, summary = "Create a Daily Spot Rate", description = "Records a new daily spot rate for a given office, currency and date.\n\n"
-            + "Mandatory Fields: officeId, currencyCode, rateDate, spotRate, buyingRate, sellingRate")
+    @Operation(tags = {
+            "Daily Spot Rate" }, summary = "Create a Daily Spot Rate", description = "Records a new daily spot rate for a given office, currency and date.\n\n"
+                    + "Mandatory Fields: officeId, currencyCode, rateDate, spotRate, buyingRate, sellingRate")
     @RequestBody(content = @Content(schema = @Schema(implementation = DailySpotRateData.class)))
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CommandProcessingResult.class))) })
@@ -143,12 +143,12 @@ public class DailySpotRatesApiResource {
     @Path("{dailySpotRateId}")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    @Operation(tags = { "Daily Spot Rate" }, summary = "Update a Daily Spot Rate", description = "Updates spotRate, buyingRate and/or sellingRate for an existing record.")
+    @Operation(tags = {
+            "Daily Spot Rate" }, summary = "Update a Daily Spot Rate", description = "Updates spotRate, buyingRate and/or sellingRate for an existing record.")
     @RequestBody(content = @Content(schema = @Schema(implementation = DailySpotRateData.class)))
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CommandProcessingResult.class))) })
-    public String update(
-            @PathParam("dailySpotRateId") @Parameter(description = "dailySpotRateId") final Long dailySpotRateId,
+    public String update(@PathParam("dailySpotRateId") @Parameter(description = "dailySpotRateId") final Long dailySpotRateId,
             @Parameter(hidden = true) final String jsonRequestBody) {
 
         final CommandWrapper commandRequest = new CommandWrapperBuilder().updateDailySpotRate(dailySpotRateId).withJson(jsonRequestBody)

@@ -285,8 +285,8 @@ public class Client extends AbstractAuditableWithUTCDateTimeCustom {
             final LocalDate activationDate, final LocalDate officeJoiningDate, final String externalId, final String mobileNo,
             final String emailAddress, final Staff staff, final LocalDate submittedOnDate, final Long savingsProductId,
             final Long savingsAccountId, final LocalDate dateOfBirth, final CodeValue gender, final CodeValue clientType,
-            final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff,
-            final Village village, final Village birthVillage) {
+            final CodeValue clientClassification, final Integer legalForm, final Boolean isStaff, final Village village,
+            final Village birthVillage) {
 
         if (StringUtils.isBlank(accountNo)) {
             this.accountNumber = new RandomPasswordGenerator(19).generate();

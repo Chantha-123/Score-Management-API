@@ -20,9 +20,9 @@ package org.apache.fineract.portfolio.loanproduct.domain;
 
 public enum InterestMethod {
 
-    DECLINING_BALANCE(0, "interestType.declining.balance"), FLAT(1, "interestType.flat"), INVALID(2, "interestType.invalid"),
-    BALLOON(3, "interestType.Balloon"),SEMI_BALOON(4,"interestType.SemiBalloon"),AMORTIZATION(5,"interestType.Amortization"),
-    AMORTIZATION_FEE(6,"interestType.Amortization.Fee");
+    DECLINING_BALANCE(0, "interestType.declining.balance"), FLAT(1, "interestType.flat"), INVALID(2, "interestType.invalid"), BALLOON(3,
+            "interestType.Balloon"), SEMI_BALOON(4, "interestType.SemiBalloon"), AMORTIZATION(5,
+                    "interestType.Amortization"), AMORTIZATION_FEE(6, "interestType.Amortization.Fee");
 
     private final Integer value;
     private final String code;
@@ -39,9 +39,11 @@ public enum InterestMethod {
     public String getCode() {
         return this.code;
     }
-//    
-//    DECLINING_BALANCE(0, "interestType.declining.balance"), FLAT(1, "interestType.flat"), INVALID(2, "interestType.invalid"),
-//    BALLOON(3, "interestType.Balloon"),SEMI_BALOON(4,"interestType.SemiBalloon"),AMORTIZATION(5,"interestType.Amortization");
+    //
+    // DECLINING_BALANCE(0, "interestType.declining.balance"), FLAT(1, "interestType.flat"), INVALID(2,
+    // "interestType.invalid"),
+    // BALLOON(3,
+    // "interestType.Balloon"),SEMI_BALOON(4,"interestType.SemiBalloon"),AMORTIZATION(5,"interestType.Amortization");
 
     public static InterestMethod fromInt(final Integer selectedMethod) {
 
@@ -54,16 +56,16 @@ public enum InterestMethod {
                 repaymentMethod = InterestMethod.FLAT;
             break;
             case 3:
-            	repaymentMethod = InterestMethod.BALLOON;
+                repaymentMethod = InterestMethod.BALLOON;
             break;
             case 4:
-            	repaymentMethod = InterestMethod.SEMI_BALOON;
+                repaymentMethod = InterestMethod.SEMI_BALOON;
             break;
             case 5:
-            	repaymentMethod = InterestMethod.AMORTIZATION;
+                repaymentMethod = InterestMethod.AMORTIZATION;
             break;
             case 6:
-            	repaymentMethod = InterestMethod.AMORTIZATION_FEE;
+                repaymentMethod = InterestMethod.AMORTIZATION_FEE;
             break;
             default:
                 repaymentMethod = InterestMethod.INVALID;
@@ -75,6 +77,7 @@ public enum InterestMethod {
     public boolean isDecliningBalnce() {
         return this.value.equals(InterestMethod.DECLINING_BALANCE.getValue());
     }
+
     public boolean isAnunityFee() {
         return this.value.equals(InterestMethod.AMORTIZATION_FEE.getValue());
     }

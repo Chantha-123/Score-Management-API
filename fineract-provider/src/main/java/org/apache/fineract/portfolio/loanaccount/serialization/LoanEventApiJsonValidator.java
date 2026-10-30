@@ -247,6 +247,35 @@ public final class LoanEventApiJsonValidator {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
+    public void validateChargeFeeTransaction(final String json) {
+
+        if (StringUtils.isBlank(json)) {
+            throw new InvalidJsonException();
+        }
+
+        final Set<String> transactionParameters = new HashSet<>(Arrays.asList("chargeId", "transactionDate", "externalId", "note", "locale",
+                "dateFormat", "paymentTypeId", "accountNumber", "checkNumber", "routingCode", "receiptNumber", "bankNumber"));
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, transactionParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan.transaction");
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+        final Long chargeId = this.fromApiJsonHelper.extractLongNamed("chargeId", element);
+        baseDataValidator.reset().parameter("chargeId").value(chargeId).notNull().longGreaterThanZero();
+
+        final LocalDate transactionDate = this.fromApiJsonHelper.extractLocalDateNamed("transactionDate", element);
+        baseDataValidator.reset().parameter("transactionDate").value(transactionDate).notNull();
+
+        final String note = this.fromApiJsonHelper.extractStringNamed("note", element);
+        baseDataValidator.reset().parameter("note").value(note).notExceedingLengthOf(1000);
+
+        validatePaymentDetails(baseDataValidator, element);
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
     public void validateRepaymentDateWithMeetingDate(final LocalDate repaymentDate, final CalendarInstance calendarInstance) {
         if (null != calendarInstance) {
             final Calendar calendar = calendarInstance.getCalendar();

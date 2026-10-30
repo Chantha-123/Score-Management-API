@@ -239,7 +239,7 @@ public final class LoanAccountData {
     private LocalDate expectedDisbursementDate;
 
     private final CollectionData delinquent;
-    
+
     Integer simiprincipalGrace;
 
     public static LoanAccountData importInstanceIndividual(EnumOptionData loanTypeEnumOption, Long clientId, Long productId,
@@ -615,7 +615,7 @@ public final class LoanAccountData {
                 interestRecalculationData, originalSchedule, createStandingInstructionAtDisbursement, paidInAdvance, interestRatesPeriods,
                 isVariableInstallmentsAllowed, minimumGap, maximumGap, subStatus, canUseForTopup, clientActiveLoanOptions, isTopup,
                 closureLoanId, closureLoanAccountNo, topupAmount, isEqualAmortization, rates, isRatesEnabled,
-                fixedPrincipalPercentagePerInstallment, delinquent,null);
+                fixedPrincipalPercentagePerInstallment, delinquent, null);
     }
 
     /**
@@ -761,7 +761,7 @@ public final class LoanAccountData {
                 originalSchedule, createStandingInstructionAtDisbursement, paidInAdvance, interestRatesPeriods,
                 isVariableInstallmentsAllowed, minimumGap, maximumGap, subStatus, canUseForTopup, clientActiveLoanOptions, isTopup,
                 closureLoanId, closureLoanAccountNo, topupAmount, isEqualAmortization, rates, isRatesEnabled,
-                fixedPrincipalPercentagePerInstallment, delinquent,null);
+                fixedPrincipalPercentagePerInstallment, delinquent, null);
     }
 
     public static LoanAccountData populateClientDefaults(final LoanAccountData acc, final LoanAccountData clientAcc) {
@@ -792,7 +792,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, acc.paidInAdvance, acc.interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, acc.rates, acc.isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent, acc.simiprincipalGrace);
     }
 
     /**
@@ -940,7 +940,7 @@ public final class LoanAccountData {
                 originalSchedule, createStandingInstructionAtDisbursement, paidInAdvance, interestRatesPeriods,
                 isVariableInstallmentsAllowed, minimumGap, maximumGap, subStatus, canUseForTopup, clientActiveLoanOptions, isTopup,
                 closureLoanId, closureLoanAccountNo, topupAmount, isEqualAmortization, rates, isRatesEnabled,
-                fixedPrincipalPercentagePerInstallment, delinquent,null);
+                fixedPrincipalPercentagePerInstallment, delinquent, null);
     }
 
     public static LoanAccountData populateGroupDefaults(final LoanAccountData acc, final LoanAccountData groupAcc) {
@@ -970,7 +970,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, acc.paidInAdvance, acc.interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, acc.rates, acc.isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent, acc.simiprincipalGrace);
     }
 
     public static LoanAccountData loanProductWithTemplateDefaults(final LoanProductData product,
@@ -1138,7 +1138,7 @@ public final class LoanAccountData {
                 product.isVariableInstallmentsAllowed(), product.getMinimumGapBetweenInstallments(),
                 product.getMaximumGapBetweenInstallments(), subStatus, canUseForTopup, clientActiveLoanOptions, isTopup, closureLoanId,
                 closureLoanAccountNo, topupAmount, product.isEqualAmortization(), rates, isRatesEnabled,
-                product.getFixedPrincipalPercentagePerInstallment(), delinquent,null);
+                product.getFixedPrincipalPercentagePerInstallment(), delinquent, null);
     }
 
     public static LoanAccountData populateLoanProductDefaults(final LoanAccountData acc, final LoanProductData product) {
@@ -1208,7 +1208,7 @@ public final class LoanAccountData {
                 product.isVariableInstallmentsAllowed(), product.getMinimumGapBetweenInstallments(),
                 product.getMaximumGapBetweenInstallments(), acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, product.isEqualAmortization(), acc.rates, acc.isRatesEnabled,
-                product.getFixedPrincipalPercentagePerInstallment(), delinquent,null);
+                product.getFixedPrincipalPercentagePerInstallment(), delinquent, null);
     }
 
     /*
@@ -1299,7 +1299,7 @@ public final class LoanAccountData {
                 isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, interestRecalculationData, originalSchedule,
                 createStandingInstructionAtDisbursement, paidInAdvance, interestRatesPeriods, isVariableInstallmentsAllowed, minimumGap,
                 maximumGap, subStatus, canUseForTopup, clientActiveLoanOptions, isTopup, closureLoanId, closureLoanAccountNo, topupAmount,
-                isEqualAmortization, rates, isRatesEnabled, fixedPrincipalPercentagePerInstallment, delinquent,null);
+                isEqualAmortization, rates, isRatesEnabled, fixedPrincipalPercentagePerInstallment, delinquent, null);
     }
 
     /*
@@ -1353,7 +1353,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, paidInAdvance, interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, clientActiveLoanOptions, acc.isTopup, acc.closureLoanId,
                 acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, rates, isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, delinquent, acc.simiprincipalGrace);
     }
 
     public static LoanAccountData associationsAndTemplate(final LoanAccountData acc, final Collection<LoanProductData> productOptions,
@@ -1396,7 +1396,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, acc.paidInAdvance, acc.interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, acc.rates, acc.isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent, acc.simiprincipalGrace);
     }
 
     public static LoanAccountData associateMemberVariations(final LoanAccountData acc, final Map<Long, Integer> memberLoanCycle) {
@@ -1462,7 +1462,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, acc.paidInAdvance, acc.interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, acc.rates, acc.isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent, acc.simiprincipalGrace);
     }
 
     public static LoanAccountData withInterestRecalculationCalendarData(final LoanAccountData acc, final CalendarData calendarData,
@@ -1496,7 +1496,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, acc.paidInAdvance, acc.interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, acc.rates, acc.isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent, acc.simiprincipalGrace);
     }
 
     public static LoanAccountData withLoanCalendarData(final LoanAccountData acc, final CalendarData calendarData) {
@@ -1525,7 +1525,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, acc.paidInAdvance, acc.interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, acc.rates, acc.isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent, acc.simiprincipalGrace);
     }
 
     public static LoanAccountData withOriginalSchedule(final LoanAccountData acc, final LoanScheduleData originalSchedule) {
@@ -1555,7 +1555,7 @@ public final class LoanAccountData {
                 acc.createStandingInstructionAtDisbursement, acc.paidInAdvance, acc.interestRatesPeriods, acc.isVariableInstallmentsAllowed,
                 acc.minimumGap, acc.maximumGap, acc.subStatus, acc.canUseForTopup, acc.clientActiveLoanOptions, acc.isTopup,
                 acc.closureLoanId, acc.closureLoanAccountNo, acc.topupAmount, acc.isEqualAmortization, acc.rates, acc.isRatesEnabled,
-                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent,acc.simiprincipalGrace);
+                acc.fixedPrincipalPercentagePerInstallment, acc.delinquent, acc.simiprincipalGrace);
     }
 
     private LoanAccountData(final Long id, //
@@ -1957,528 +1957,528 @@ public final class LoanAccountData {
         return this.status.value();
     }
 
-	public String getDateFormat() {
-		return dateFormat;
-	}
-
-	public void setDateFormat(String dateFormat) {
-		this.dateFormat = dateFormat;
-	}
-
-	public String getLocale() {
-		return locale;
-	}
-
-	public void setLocale(String locale) {
-		this.locale = locale;
-	}
-
-	public LocalDate getSubmittedOnDate() {
-		return submittedOnDate;
-	}
-
-	public void setSubmittedOnDate(LocalDate submittedOnDate) {
-		this.submittedOnDate = submittedOnDate;
-	}
-
-	public Long getProductId() {
-		return productId;
-	}
-
-	public void setProductId(Long productId) {
-		this.productId = productId;
-	}
-
-	public Integer getLoanTermFrequency() {
-		return loanTermFrequency;
-	}
-
-	public void setLoanTermFrequency(Integer loanTermFrequency) {
-		this.loanTermFrequency = loanTermFrequency;
-	}
-
-	public EnumOptionData getLoanTermFrequencyType() {
-		return loanTermFrequencyType;
-	}
-
-	public void setLoanTermFrequencyType(EnumOptionData loanTermFrequencyType) {
-		this.loanTermFrequencyType = loanTermFrequencyType;
-	}
-
-	public LocalDate getRepaymentsStartingFromDate() {
-		return repaymentsStartingFromDate;
-	}
-
-	public void setRepaymentsStartingFromDate(LocalDate repaymentsStartingFromDate) {
-		this.repaymentsStartingFromDate = repaymentsStartingFromDate;
-	}
-
-	public String getLinkAccountId() {
-		return linkAccountId;
-	}
-
-	public void setLinkAccountId(String linkAccountId) {
-		this.linkAccountId = linkAccountId;
-	}
-
-	public Long getGroupId() {
-		return groupId;
-	}
-
-	public void setGroupId(Long groupId) {
-		this.groupId = groupId;
-	}
-
-	public LocalDate getExpectedDisbursementDate() {
-		return expectedDisbursementDate;
-	}
-
-	public void setExpectedDisbursementDate(LocalDate expectedDisbursementDate) {
-		this.expectedDisbursementDate = expectedDisbursementDate;
-	}
-
-	public Integer getSimiprincipalGrace() {
-		return simiprincipalGrace;
-	}
-
-	public void setSimiprincipalGrace(Integer simiprincipalGrace) {
-		this.simiprincipalGrace = simiprincipalGrace;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public String getExternalId() {
-		return externalId;
-	}
-
-	public LoanStatusEnumData getStatus() {
-		return status;
-	}
-
-	public EnumOptionData getSubStatus() {
-		return subStatus;
-	}
-
-	public Long getClientOfficeId() {
-		return clientOfficeId;
-	}
-
-	public GroupGeneralData getGroup() {
-		return group;
-	}
-
-	public Long getLoanProductId() {
-		return loanProductId;
-	}
-
-	public String getLoanProductDescription() {
-		return loanProductDescription;
-	}
-
-	public Long getFundId() {
-		return fundId;
-	}
-
-	public String getFundName() {
-		return fundName;
-	}
-
-	public Long getLoanPurposeId() {
-		return loanPurposeId;
-	}
-
-	public String getLoanPurposeName() {
-		return loanPurposeName;
-	}
-
-	public Long getLoanOfficerId() {
-		return loanOfficerId;
-	}
-
-	public String getLoanOfficerName() {
-		return loanOfficerName;
-	}
-
-	public EnumOptionData getLoanType() {
-		return loanType;
-	}
-
-	public CurrencyData getCurrency() {
-		return currency;
-	}
-
-	public BigDecimal getApprovedPrincipal() {
-		return approvedPrincipal;
-	}
-
-	public BigDecimal getProposedPrincipal() {
-		return proposedPrincipal;
-	}
-
-	public Integer getTermFrequency() {
-		return termFrequency;
-	}
-
-	public EnumOptionData getTermPeriodFrequencyType() {
-		return termPeriodFrequencyType;
-	}
-
-	public Integer getNumberOfRepayments() {
-		return numberOfRepayments;
-	}
-
-	public Integer getRepaymentEvery() {
-		return repaymentEvery;
-	}
-
-	public EnumOptionData getRepaymentFrequencyType() {
-		return repaymentFrequencyType;
-	}
-
-	public EnumOptionData getRepaymentFrequencyNthDayType() {
-		return repaymentFrequencyNthDayType;
-	}
-
-	public EnumOptionData getRepaymentFrequencyDayOfWeekType() {
-		return repaymentFrequencyDayOfWeekType;
-	}
-
-	public BigDecimal getInterestRatePerPeriod() {
-		return interestRatePerPeriod;
-	}
-
-	public EnumOptionData getInterestRateFrequencyType() {
-		return interestRateFrequencyType;
-	}
-
-	public BigDecimal getAnnualInterestRate() {
-		return annualInterestRate;
-	}
-
-	public EnumOptionData getAmortizationType() {
-		return amortizationType;
-	}
-
-	public EnumOptionData getInterestType() {
-		return interestType;
-	}
-
-	public EnumOptionData getInterestCalculationPeriodType() {
-		return interestCalculationPeriodType;
-	}
-
-	public Boolean getAllowPartialPeriodInterestCalcualtion() {
-		return allowPartialPeriodInterestCalcualtion;
-	}
-
-	public BigDecimal getInArrearsTolerance() {
-		return inArrearsTolerance;
-	}
-
-	public Long getTransactionProcessingStrategyId() {
-		return transactionProcessingStrategyId;
-	}
-
-	public String getTransactionProcessingStrategyName() {
-		return transactionProcessingStrategyName;
-	}
-
-	public Integer getGraceOnPrincipalPayment() {
-		return graceOnPrincipalPayment;
-	}
-
-	public Integer getRecurringMoratoriumOnPrincipalPeriods() {
-		return recurringMoratoriumOnPrincipalPeriods;
-	}
-
-	public Integer getGraceOnInterestPayment() {
-		return graceOnInterestPayment;
-	}
-
-	public Integer getGraceOnInterestCharged() {
-		return graceOnInterestCharged;
-	}
-
-	public Integer getGraceOnArrearsAgeing() {
-		return graceOnArrearsAgeing;
-	}
-
-	public LocalDate getInterestChargedFromDate() {
-		return interestChargedFromDate;
-	}
-
-	public LocalDate getExpectedFirstRepaymentOnDate() {
-		return expectedFirstRepaymentOnDate;
-	}
-
-	public Boolean getSyncDisbursementWithMeeting() {
-		return syncDisbursementWithMeeting;
-	}
-
-	public LoanSummaryData getSummary() {
-		return summary;
-	}
-
-	public LoanScheduleData getRepaymentSchedule() {
-		return repaymentSchedule;
-	}
-
-	public Collection<LoanTransactionData> getTransactions() {
-		return transactions;
-	}
-
-	public Collection<LoanChargeData> getCharges() {
-		return charges;
-	}
-
-	public Collection<LoanCollateralManagementData> getCollateral() {
-		return collateral;
-	}
-
-	public Collection<GuarantorData> getGuarantors() {
-		return guarantors;
-	}
-
-	public CalendarData getMeeting() {
-		return meeting;
-	}
-
-	public Collection<NoteData> getNotes() {
-		return notes;
-	}
-
-	public Collection<DisbursementData> getDisbursementDetails() {
-		return disbursementDetails;
-	}
-
-	public LoanScheduleData getOriginalSchedule() {
-		return originalSchedule;
-	}
-
-	public Collection<LoanProductData> getProductOptions() {
-		return productOptions;
-	}
-
-	public Collection<StaffData> getLoanOfficerOptions() {
-		return loanOfficerOptions;
-	}
-
-	public Collection<CodeValueData> getLoanPurposeOptions() {
-		return loanPurposeOptions;
-	}
-
-	public Collection<FundData> getFundOptions() {
-		return fundOptions;
-	}
-
-	public Collection<EnumOptionData> getTermFrequencyTypeOptions() {
-		return termFrequencyTypeOptions;
-	}
-
-	public Collection<EnumOptionData> getRepaymentFrequencyTypeOptions() {
-		return repaymentFrequencyTypeOptions;
-	}
-
-	public Collection<EnumOptionData> getRepaymentFrequencyNthDayTypeOptions() {
-		return repaymentFrequencyNthDayTypeOptions;
-	}
-
-	public Collection<EnumOptionData> getRepaymentFrequencyDaysOfWeekTypeOptions() {
-		return repaymentFrequencyDaysOfWeekTypeOptions;
-	}
-
-	public Collection<EnumOptionData> getInterestRateFrequencyTypeOptions() {
-		return interestRateFrequencyTypeOptions;
-	}
-
-	public Collection<EnumOptionData> getAmortizationTypeOptions() {
-		return amortizationTypeOptions;
-	}
-
-	public Collection<EnumOptionData> getInterestTypeOptions() {
-		return interestTypeOptions;
-	}
-
-	public Collection<EnumOptionData> getInterestCalculationPeriodTypeOptions() {
-		return interestCalculationPeriodTypeOptions;
-	}
-
-	public Collection<TransactionProcessingStrategyData> getTransactionProcessingStrategyOptions() {
-		return transactionProcessingStrategyOptions;
-	}
-
-	public Collection<ChargeData> getChargeOptions() {
-		return chargeOptions;
-	}
-
-	public Collection<CodeValueData> getLoanCollateralOptions() {
-		return loanCollateralOptions;
-	}
-
-	public Collection<CalendarData> getCalendarOptions() {
-		return calendarOptions;
-	}
-
-	public BigDecimal getFeeChargesAtDisbursementCharged() {
-		return feeChargesAtDisbursementCharged;
-	}
-
-	public BigDecimal getTotalOverpaid() {
-		return totalOverpaid;
-	}
-
-	public Integer getLoanCounter() {
-		return loanCounter;
-	}
-
-	public Integer getLoanProductCounter() {
-		return loanProductCounter;
-	}
-
-	public PortfolioAccountData getLinkedAccount() {
-		return linkedAccount;
-	}
-
-	public Collection<PortfolioAccountData> getAccountLinkingOptions() {
-		return accountLinkingOptions;
-	}
-
-	public Boolean getMultiDisburseLoan() {
-		return multiDisburseLoan;
-	}
-
-	public Boolean getCanDefineInstallmentAmount() {
-		return canDefineInstallmentAmount;
-	}
-
-	public BigDecimal getFixedEmiAmount() {
-		return fixedEmiAmount;
-	}
-
-	public BigDecimal getMaxOutstandingLoanBalance() {
-		return maxOutstandingLoanBalance;
-	}
-
-	public Boolean getCanDisburse() {
-		return canDisburse;
-	}
-
-	public Collection<LoanTermVariationsData> getEmiAmountVariations() {
-		return emiAmountVariations;
-	}
-
-	public Collection<LoanAccountSummaryData> getClientActiveLoanOptions() {
-		return clientActiveLoanOptions;
-	}
-
-	public Boolean getCanUseForTopup() {
-		return canUseForTopup;
-	}
-
-	public boolean isTopup() {
-		return isTopup;
-	}
-
-	public Long getClosureLoanId() {
-		return closureLoanId;
-	}
-
-	public String getClosureLoanAccountNo() {
-		return closureLoanAccountNo;
-	}
-
-	public BigDecimal getTopupAmount() {
-		return topupAmount;
-	}
-
-	public LoanProductData getProduct() {
-		return product;
-	}
-
-	public Map<Long, LoanBorrowerCycleData> getMemberVariations() {
-		return memberVariations;
-	}
-
-	public Boolean getInArrears() {
-		return inArrears;
-	}
-
-	public Boolean getIsNPA() {
-		return isNPA;
-	}
-
-	public Collection<ChargeData> getOverdueCharges() {
-		return overdueCharges;
-	}
-
-	public EnumOptionData getDaysInMonthType() {
-		return daysInMonthType;
-	}
-
-	public EnumOptionData getDaysInYearType() {
-		return daysInYearType;
-	}
-
-	public LoanInterestRecalculationData getInterestRecalculationData() {
-		return interestRecalculationData;
-	}
-
-	public Boolean getCreateStandingInstructionAtDisbursement() {
-		return createStandingInstructionAtDisbursement;
-	}
-
-	public PaidInAdvanceData getPaidInAdvance() {
-		return paidInAdvance;
-	}
-
-	public Collection<InterestRatePeriodData> getInterestRatesPeriods() {
-		return interestRatesPeriods;
-	}
-
-	public Boolean getIsVariableInstallmentsAllowed() {
-		return isVariableInstallmentsAllowed;
-	}
-
-	public Integer getMinimumGap() {
-		return minimumGap;
-	}
-
-	public Integer getMaximumGap() {
-		return maximumGap;
-	}
-
-	public List<DatatableData> getDatatables() {
-		return datatables;
-	}
-
-	public Boolean getIsEqualAmortization() {
-		return isEqualAmortization;
-	}
-
-	public BigDecimal getFixedPrincipalPercentagePerInstallment() {
-		return fixedPrincipalPercentagePerInstallment;
-	}
-
-	public List<RateData> getRates() {
-		return rates;
-	}
-
-	public Boolean getIsRatesEnabled() {
-		return isRatesEnabled;
-	}
-
-	public CollectionData getDelinquent() {
-		return delinquent;
-	}
-
-	public static Comparator<LoanAccountData> getClientnamecomparator() {
-		return ClientNameComparator;
-	}
-
-	public void setRowIndex(Integer rowIndex) {
-		this.rowIndex = rowIndex;
-	}
+    public String getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = dateFormat;
+    }
+
+    public String getLocale() {
+        return locale;
+    }
+
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
+
+    public LocalDate getSubmittedOnDate() {
+        return submittedOnDate;
+    }
+
+    public void setSubmittedOnDate(LocalDate submittedOnDate) {
+        this.submittedOnDate = submittedOnDate;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public Integer getLoanTermFrequency() {
+        return loanTermFrequency;
+    }
+
+    public void setLoanTermFrequency(Integer loanTermFrequency) {
+        this.loanTermFrequency = loanTermFrequency;
+    }
+
+    public EnumOptionData getLoanTermFrequencyType() {
+        return loanTermFrequencyType;
+    }
+
+    public void setLoanTermFrequencyType(EnumOptionData loanTermFrequencyType) {
+        this.loanTermFrequencyType = loanTermFrequencyType;
+    }
+
+    public LocalDate getRepaymentsStartingFromDate() {
+        return repaymentsStartingFromDate;
+    }
+
+    public void setRepaymentsStartingFromDate(LocalDate repaymentsStartingFromDate) {
+        this.repaymentsStartingFromDate = repaymentsStartingFromDate;
+    }
+
+    public String getLinkAccountId() {
+        return linkAccountId;
+    }
+
+    public void setLinkAccountId(String linkAccountId) {
+        this.linkAccountId = linkAccountId;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
+    }
+
+    public LocalDate getExpectedDisbursementDate() {
+        return expectedDisbursementDate;
+    }
+
+    public void setExpectedDisbursementDate(LocalDate expectedDisbursementDate) {
+        this.expectedDisbursementDate = expectedDisbursementDate;
+    }
+
+    public Integer getSimiprincipalGrace() {
+        return simiprincipalGrace;
+    }
+
+    public void setSimiprincipalGrace(Integer simiprincipalGrace) {
+        this.simiprincipalGrace = simiprincipalGrace;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public LoanStatusEnumData getStatus() {
+        return status;
+    }
+
+    public EnumOptionData getSubStatus() {
+        return subStatus;
+    }
+
+    public Long getClientOfficeId() {
+        return clientOfficeId;
+    }
+
+    public GroupGeneralData getGroup() {
+        return group;
+    }
+
+    public Long getLoanProductId() {
+        return loanProductId;
+    }
+
+    public String getLoanProductDescription() {
+        return loanProductDescription;
+    }
+
+    public Long getFundId() {
+        return fundId;
+    }
+
+    public String getFundName() {
+        return fundName;
+    }
+
+    public Long getLoanPurposeId() {
+        return loanPurposeId;
+    }
+
+    public String getLoanPurposeName() {
+        return loanPurposeName;
+    }
+
+    public Long getLoanOfficerId() {
+        return loanOfficerId;
+    }
+
+    public String getLoanOfficerName() {
+        return loanOfficerName;
+    }
+
+    public EnumOptionData getLoanType() {
+        return loanType;
+    }
+
+    public CurrencyData getCurrency() {
+        return currency;
+    }
+
+    public BigDecimal getApprovedPrincipal() {
+        return approvedPrincipal;
+    }
+
+    public BigDecimal getProposedPrincipal() {
+        return proposedPrincipal;
+    }
+
+    public Integer getTermFrequency() {
+        return termFrequency;
+    }
+
+    public EnumOptionData getTermPeriodFrequencyType() {
+        return termPeriodFrequencyType;
+    }
+
+    public Integer getNumberOfRepayments() {
+        return numberOfRepayments;
+    }
+
+    public Integer getRepaymentEvery() {
+        return repaymentEvery;
+    }
+
+    public EnumOptionData getRepaymentFrequencyType() {
+        return repaymentFrequencyType;
+    }
+
+    public EnumOptionData getRepaymentFrequencyNthDayType() {
+        return repaymentFrequencyNthDayType;
+    }
+
+    public EnumOptionData getRepaymentFrequencyDayOfWeekType() {
+        return repaymentFrequencyDayOfWeekType;
+    }
+
+    public BigDecimal getInterestRatePerPeriod() {
+        return interestRatePerPeriod;
+    }
+
+    public EnumOptionData getInterestRateFrequencyType() {
+        return interestRateFrequencyType;
+    }
+
+    public BigDecimal getAnnualInterestRate() {
+        return annualInterestRate;
+    }
+
+    public EnumOptionData getAmortizationType() {
+        return amortizationType;
+    }
+
+    public EnumOptionData getInterestType() {
+        return interestType;
+    }
+
+    public EnumOptionData getInterestCalculationPeriodType() {
+        return interestCalculationPeriodType;
+    }
+
+    public Boolean getAllowPartialPeriodInterestCalcualtion() {
+        return allowPartialPeriodInterestCalcualtion;
+    }
+
+    public BigDecimal getInArrearsTolerance() {
+        return inArrearsTolerance;
+    }
+
+    public Long getTransactionProcessingStrategyId() {
+        return transactionProcessingStrategyId;
+    }
+
+    public String getTransactionProcessingStrategyName() {
+        return transactionProcessingStrategyName;
+    }
+
+    public Integer getGraceOnPrincipalPayment() {
+        return graceOnPrincipalPayment;
+    }
+
+    public Integer getRecurringMoratoriumOnPrincipalPeriods() {
+        return recurringMoratoriumOnPrincipalPeriods;
+    }
+
+    public Integer getGraceOnInterestPayment() {
+        return graceOnInterestPayment;
+    }
+
+    public Integer getGraceOnInterestCharged() {
+        return graceOnInterestCharged;
+    }
+
+    public Integer getGraceOnArrearsAgeing() {
+        return graceOnArrearsAgeing;
+    }
+
+    public LocalDate getInterestChargedFromDate() {
+        return interestChargedFromDate;
+    }
+
+    public LocalDate getExpectedFirstRepaymentOnDate() {
+        return expectedFirstRepaymentOnDate;
+    }
+
+    public Boolean getSyncDisbursementWithMeeting() {
+        return syncDisbursementWithMeeting;
+    }
+
+    public LoanSummaryData getSummary() {
+        return summary;
+    }
+
+    public LoanScheduleData getRepaymentSchedule() {
+        return repaymentSchedule;
+    }
+
+    public Collection<LoanTransactionData> getTransactions() {
+        return transactions;
+    }
+
+    public Collection<LoanChargeData> getCharges() {
+        return charges;
+    }
+
+    public Collection<LoanCollateralManagementData> getCollateral() {
+        return collateral;
+    }
+
+    public Collection<GuarantorData> getGuarantors() {
+        return guarantors;
+    }
+
+    public CalendarData getMeeting() {
+        return meeting;
+    }
+
+    public Collection<NoteData> getNotes() {
+        return notes;
+    }
+
+    public Collection<DisbursementData> getDisbursementDetails() {
+        return disbursementDetails;
+    }
+
+    public LoanScheduleData getOriginalSchedule() {
+        return originalSchedule;
+    }
+
+    public Collection<LoanProductData> getProductOptions() {
+        return productOptions;
+    }
+
+    public Collection<StaffData> getLoanOfficerOptions() {
+        return loanOfficerOptions;
+    }
+
+    public Collection<CodeValueData> getLoanPurposeOptions() {
+        return loanPurposeOptions;
+    }
+
+    public Collection<FundData> getFundOptions() {
+        return fundOptions;
+    }
+
+    public Collection<EnumOptionData> getTermFrequencyTypeOptions() {
+        return termFrequencyTypeOptions;
+    }
+
+    public Collection<EnumOptionData> getRepaymentFrequencyTypeOptions() {
+        return repaymentFrequencyTypeOptions;
+    }
+
+    public Collection<EnumOptionData> getRepaymentFrequencyNthDayTypeOptions() {
+        return repaymentFrequencyNthDayTypeOptions;
+    }
+
+    public Collection<EnumOptionData> getRepaymentFrequencyDaysOfWeekTypeOptions() {
+        return repaymentFrequencyDaysOfWeekTypeOptions;
+    }
+
+    public Collection<EnumOptionData> getInterestRateFrequencyTypeOptions() {
+        return interestRateFrequencyTypeOptions;
+    }
+
+    public Collection<EnumOptionData> getAmortizationTypeOptions() {
+        return amortizationTypeOptions;
+    }
+
+    public Collection<EnumOptionData> getInterestTypeOptions() {
+        return interestTypeOptions;
+    }
+
+    public Collection<EnumOptionData> getInterestCalculationPeriodTypeOptions() {
+        return interestCalculationPeriodTypeOptions;
+    }
+
+    public Collection<TransactionProcessingStrategyData> getTransactionProcessingStrategyOptions() {
+        return transactionProcessingStrategyOptions;
+    }
+
+    public Collection<ChargeData> getChargeOptions() {
+        return chargeOptions;
+    }
+
+    public Collection<CodeValueData> getLoanCollateralOptions() {
+        return loanCollateralOptions;
+    }
+
+    public Collection<CalendarData> getCalendarOptions() {
+        return calendarOptions;
+    }
+
+    public BigDecimal getFeeChargesAtDisbursementCharged() {
+        return feeChargesAtDisbursementCharged;
+    }
+
+    public BigDecimal getTotalOverpaid() {
+        return totalOverpaid;
+    }
+
+    public Integer getLoanCounter() {
+        return loanCounter;
+    }
+
+    public Integer getLoanProductCounter() {
+        return loanProductCounter;
+    }
+
+    public PortfolioAccountData getLinkedAccount() {
+        return linkedAccount;
+    }
+
+    public Collection<PortfolioAccountData> getAccountLinkingOptions() {
+        return accountLinkingOptions;
+    }
+
+    public Boolean getMultiDisburseLoan() {
+        return multiDisburseLoan;
+    }
+
+    public Boolean getCanDefineInstallmentAmount() {
+        return canDefineInstallmentAmount;
+    }
+
+    public BigDecimal getFixedEmiAmount() {
+        return fixedEmiAmount;
+    }
+
+    public BigDecimal getMaxOutstandingLoanBalance() {
+        return maxOutstandingLoanBalance;
+    }
+
+    public Boolean getCanDisburse() {
+        return canDisburse;
+    }
+
+    public Collection<LoanTermVariationsData> getEmiAmountVariations() {
+        return emiAmountVariations;
+    }
+
+    public Collection<LoanAccountSummaryData> getClientActiveLoanOptions() {
+        return clientActiveLoanOptions;
+    }
+
+    public Boolean getCanUseForTopup() {
+        return canUseForTopup;
+    }
+
+    public boolean isTopup() {
+        return isTopup;
+    }
+
+    public Long getClosureLoanId() {
+        return closureLoanId;
+    }
+
+    public String getClosureLoanAccountNo() {
+        return closureLoanAccountNo;
+    }
+
+    public BigDecimal getTopupAmount() {
+        return topupAmount;
+    }
+
+    public LoanProductData getProduct() {
+        return product;
+    }
+
+    public Map<Long, LoanBorrowerCycleData> getMemberVariations() {
+        return memberVariations;
+    }
+
+    public Boolean getInArrears() {
+        return inArrears;
+    }
+
+    public Boolean getIsNPA() {
+        return isNPA;
+    }
+
+    public Collection<ChargeData> getOverdueCharges() {
+        return overdueCharges;
+    }
+
+    public EnumOptionData getDaysInMonthType() {
+        return daysInMonthType;
+    }
+
+    public EnumOptionData getDaysInYearType() {
+        return daysInYearType;
+    }
+
+    public LoanInterestRecalculationData getInterestRecalculationData() {
+        return interestRecalculationData;
+    }
+
+    public Boolean getCreateStandingInstructionAtDisbursement() {
+        return createStandingInstructionAtDisbursement;
+    }
+
+    public PaidInAdvanceData getPaidInAdvance() {
+        return paidInAdvance;
+    }
+
+    public Collection<InterestRatePeriodData> getInterestRatesPeriods() {
+        return interestRatesPeriods;
+    }
+
+    public Boolean getIsVariableInstallmentsAllowed() {
+        return isVariableInstallmentsAllowed;
+    }
+
+    public Integer getMinimumGap() {
+        return minimumGap;
+    }
+
+    public Integer getMaximumGap() {
+        return maximumGap;
+    }
+
+    public List<DatatableData> getDatatables() {
+        return datatables;
+    }
+
+    public Boolean getIsEqualAmortization() {
+        return isEqualAmortization;
+    }
+
+    public BigDecimal getFixedPrincipalPercentagePerInstallment() {
+        return fixedPrincipalPercentagePerInstallment;
+    }
+
+    public List<RateData> getRates() {
+        return rates;
+    }
+
+    public Boolean getIsRatesEnabled() {
+        return isRatesEnabled;
+    }
+
+    public CollectionData getDelinquent() {
+        return delinquent;
+    }
+
+    public static Comparator<LoanAccountData> getClientnamecomparator() {
+        return ClientNameComparator;
+    }
+
+    public void setRowIndex(Integer rowIndex) {
+        this.rowIndex = rowIndex;
+    }
 
 }

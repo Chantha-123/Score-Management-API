@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- Loan portfolio "(Pentaho)" reports (no Pentaho plugin is installed) now run from reports/<slug>.jrxml, with the SQL of
+         the Table report of the same name rewritten for MySQL and PostgreSQL -->
+    <changeSet author="fineract" id="1">
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Fund"/>
+            <column name="description" value="Principal disbursed in a period by fund and currency (R_currencyId, R_fundId, R_startDate, R_endDate)"/>
+            <where>report_name = 'Funds Disbursed Between Dates Summary(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Fund"/>
+            <column name="description" value="Principal disbursed in a period by office, fund and currency (R_officeId, R_currencyId, R_fundId, R_startDate, R_endDate)"/>
+            <where>report_name = 'Funds Disbursed Between Dates Summary by Office(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Approved loans awaiting disbursal with days to disbursal (R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId)"/>
+            <where>report_name = 'Loans Awaiting Disbursal(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Principal of approved loans awaiting disbursal by office, product and fund (R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId)"/>
+            <where>report_name = 'Loans Awaiting Disbursal Summary(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Principal of approved loans awaiting disbursal by office, product and expected disbursal month (R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId)"/>
+            <where>report_name = 'Loans Awaiting Disbursal Summary by Month(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Submitted loans pending approval with days pending (R_officeId, R_loanOfficerId, R_currencyId, R_loanProductId, R_loanPurposeId)"/>
+            <where>report_name = 'Loans Pending Approval(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Closed (obligations met) loans with repaid amounts (R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId, R_obligDateType, R_startDate, R_endDate)"/>
+            <where>report_name = 'Obligation Met Loans Details(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Closed (obligations met) loans totals by office and currency (R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId, R_obligDateType, R_startDate, R_endDate)"/>
+            <where>report_name = 'Obligation Met Loans Summary(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Outstanding and overdue amounts and PAR % of active loans by currency (R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId, R_parType)"/>
+            <where>report_name = 'Portfolio at Risk(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Outstanding and overdue amounts and PAR % of active loans by branch and currency (R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId, R_parType)"/>
+            <where>report_name = 'Portfolio at Risk by Branch(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Loans marked for rescheduling in a period (R_officeId, R_currencyId, R_loanProductId, R_startDate, R_endDate)"/>
+            <where>report_name = 'Rescheduled Loans(Pentaho)'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Loan"/>
+            <column name="description" value="Loans written off in a period (R_officeId, R_currencyId, R_loanProductId, R_startDate, R_endDate)"/>
+            <where>report_name = 'Written-Off Loans(Pentaho)'</where>
+        </update>
+    </changeSet>
+
+    <!-- The Table SQL of "Loans Pending Approval" never filtered on fund: stop prompting for it -->
+    <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report_parameter srp JOIN stretchy_report sr ON sr.id = srp.report_id JOIN stretchy_parameter sp ON sp.id = srp.parameter_id WHERE sr.report_name = 'Loans Pending Approval(Pentaho)' AND sp.parameter_variable = 'fundId'</sqlCheck>
+        </preConditions>
+        <delete tableName="stretchy_report_parameter">
+            <where>report_id = (SELECT sr.id FROM stretchy_report sr WHERE sr.report_name = 'Loans Pending Approval(Pentaho)') AND parameter_id = (SELECT sp.id FROM stretchy_parameter sp WHERE sp.parameter_name = 'fundIdSelectAll')</where>
+        </delete>
+    </changeSet>
+
+    <!-- One changeSet per report, so a permission that already exists is skipped individually -->
+    <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Funds Disbursed Between Dates Summary(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Funds Disbursed Between Dates Summary(Pentaho)"/>
+            <column name="entity_name" value="Funds Disbursed Between Dates Summary(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="4">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Funds Disbursed Between Dates Summary by Office(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Funds Disbursed Between Dates Summary by Office(Pentaho)"/>
+            <column name="entity_name" value="Funds Disbursed Between Dates Summary by Office(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="5">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Loans Awaiting Disbursal(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Loans Awaiting Disbursal(Pentaho)"/>
+            <column name="entity_name" value="Loans Awaiting Disbursal(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="6">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Loans Awaiting Disbursal Summary(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Loans Awaiting Disbursal Summary(Pentaho)"/>
+            <column name="entity_name" value="Loans Awaiting Disbursal Summary(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="7">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Loans Awaiting Disbursal Summary by Month(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Loans Awaiting Disbursal Summary by Month(Pentaho)"/>
+            <column name="entity_name" value="Loans Awaiting Disbursal Summary by Month(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="8">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Loans Pending Approval(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Loans Pending Approval(Pentaho)"/>
+            <column name="entity_name" value="Loans Pending Approval(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="9">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Obligation Met Loans Details(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Obligation Met Loans Details(Pentaho)"/>
+            <column name="entity_name" value="Obligation Met Loans Details(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="10">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Obligation Met Loans Summary(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Obligation Met Loans Summary(Pentaho)"/>
+            <column name="entity_name" value="Obligation Met Loans Summary(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="11">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Portfolio at Risk(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Portfolio at Risk(Pentaho)"/>
+            <column name="entity_name" value="Portfolio at Risk(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="12">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Portfolio at Risk by Branch(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Portfolio at Risk by Branch(Pentaho)"/>
+            <column name="entity_name" value="Portfolio at Risk by Branch(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="13">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Rescheduled Loans(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Rescheduled Loans(Pentaho)"/>
+            <column name="entity_name" value="Rescheduled Loans(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="14">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Written-Off Loans(Pentaho)'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Written-Off Loans(Pentaho)"/>
+            <column name="entity_name" value="Written-Off Loans(Pentaho)"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

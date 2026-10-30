@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<!-- Stretchy report "Balance Sheet" (report_type = Jasper). Run with R_officeId (1 = head office, i.e. all offices),
+     R_endDate (as-on date, yyyy-MM-dd). SQL converted from "Balance Sheet Table". -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="balance-sheet" pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="NoDataSection">
+
+    <property name="net.sf.jasperreports.export.pdf.glyph.renderer.blocks" value="khmer"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.title" value="title"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+
+    <style name="Base" isDefault="true" fontName="DejaVu Sans Khmer" fontSize="8"/>
+    <style name="Label" style="Base" forecolor="#555555"/>
+    <style name="Value" style="Base" isBold="true"/>
+    <style name="ColumnHeader" style="Base" isBold="true" mode="Opaque" backcolor="#E6E6E6" vTextAlign="Middle"/>
+    <style name="Section" style="Base" isBold="true" mode="Opaque" backcolor="#F2F2F2" vTextAlign="Middle"/>
+    <style name="Amount" style="Base" hTextAlign="Right" pattern="#,##0.00"/>
+    <style name="Total" style="Amount" isBold="true"/>
+
+    <!-- Supplied by the service on every run -->
+    <parameter name="currentDate" class="java.util.Date"/>
+    <parameter name="currentDateTime" class="java.util.Date"/>
+    <parameter name="currentUserHierarchy" class="java.lang.String"/>
+    <parameter name="currentUserName" class="java.lang.String"/>
+    <!-- Stretchy parameter variables -->
+    <parameter name="officeId" class="java.lang.Long">
+        <!-- As in the stretchy SQL, office 1 (head office) means all offices; any other office means that office only -->
+        <defaultValueExpression><![CDATA[1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="endDate" class="java.util.Date">
+        <defaultValueExpression><![CDATA[$P{currentDate}]]></defaultValueExpression>
+    </parameter>
+
+    <!-- All entries up to and including the as-on date. Assets (1): debits - credits. Liabilities (2) and equity (3):
+         credits - debits. journal entry type_enum: 1 = credit, 2 = debit. As in the stretchy SQL, income and expense
+         accounts are not included, so profit or loss not yet closed to equity shows as the difference. -->
+    <queryString>
+        <![CDATA[
+SELECT (SELECT so.name FROM m_office so WHERE so.id = $P{officeId}) AS selected_office_name,
+       x.currency_code,
+       x.classification_enum,
+       CASE x.classification_enum WHEN 1 THEN 'Assets' WHEN 2 THEN 'Liabilities' ELSE 'Equity' END AS account_type,
+       x.gl_code,
+       x.account_name,
+       CASE WHEN x.classification_enum = 1 THEN x.debit_total - x.credit_total
+            ELSE x.credit_total - x.debit_total END AS balance
+FROM (SELECT je.currency_code,
+             gl.classification_enum,
+             gl.gl_code,
+             gl.name AS account_name,
+             SUM(CASE WHEN je.type_enum = 2 THEN COALESCE(je.amount, 0) ELSE 0 END) AS debit_total,
+             SUM(CASE WHEN je.type_enum = 1 THEN COALESCE(je.amount, 0) ELSE 0 END) AS credit_total
+      FROM acc_gl_journal_entry je
+      JOIN acc_gl_account gl ON gl.id = je.account_id
+      JOIN m_office jo ON jo.id = je.office_id
+      WHERE je.type_enum IN (1, 2)
+        AND gl.classification_enum IN (1, 2, 3)
+        AND je.entry_date <= $P{endDate}
+        AND ($P{officeId} = 1 OR je.office_id = $P{officeId})
+        AND jo.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+      GROUP BY je.currency_code, gl.classification_enum, gl.gl_code, gl.name) x
+ORDER BY x.currency_code, x.classification_enum, x.gl_code
+        ]]>
+    </queryString>
+
+    <field name="selected_office_name" class="java.lang.String"/>
+    <field name="currency_code" class="java.lang.String"/>
+    <field name="classification_enum" class="java.lang.Integer"/>
+    <field name="account_type" class="java.lang.String"/>
+    <field name="gl_code" class="java.lang.String"/>
+    <field name="account_name" class="java.lang.String"/>
+    <field name="balance" class="java.math.BigDecimal"/>
+
+    <variable name="typeTotal" class="java.math.BigDecimal" resetType="Group" resetGroup="accountType" calculation="Sum">
+        <variableExpression><![CDATA[$F{balance}]]></variableExpression>
+        <initialValueExpression><![CDATA[java.math.BigDecimal.ZERO]]></initialValueExpression>
+    </variable>
+    <variable name="currencyAssets" class="java.math.BigDecimal" resetType="Group" resetGroup="currency" calculation="Sum">
+        <variableExpression><![CDATA[Integer.valueOf(1).equals($F{classification_enum}) ? $F{balance} : java.math.BigDecimal.ZERO]]></variableExpression>
+        <initialValueExpression><![CDATA[java.math.BigDecimal.ZERO]]></initialValueExpression>
+    </variable>
+    <variable name="currencyLiabilities" class="java.math.BigDecimal" resetType="Group" resetGroup="currency" calculation="Sum">
+        <variableExpression><![CDATA[Integer.valueOf(2).equals($F{classification_enum}) ? $F{balance} : java.math.BigDecimal.ZERO]]></variableExpression>
+        <initialValueExpression><![CDATA[java.math.BigDecimal.ZERO]]></initialValueExpression>
+    </variable>
+    <variable name="currencyEquity" class="java.math.BigDecimal" resetType="Group" resetGroup="currency" calculation="Sum">
+        <variableExpression><![CDATA[Integer.valueOf(3).equals($F{classification_enum}) ? $F{balance} : java.math.BigDecimal.ZERO]]></variableExpression>
+        <initialValueExpression><![CDATA[java.math.BigDecimal.ZERO]]></initialValueExpression>
+    </variable>
+
+    <!-- Amounts in different currencies are never added together: each currency is its own balance sheet -->
+    <group name="currency" isReprintHeaderOnEachPage="true">
+        <groupExpression><![CDATA[$F{currency_code}]]></groupExpression>
+        <groupHeader>
+            <band height="22">
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="555" height="18"/>
+                    <textElement><font size="9"/></textElement>
+                    <textFieldExpression><![CDATA["Currency: " + $F{currency_code}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+        <groupFooter>
+            <band height="70">
+                <textField>
+                    <reportElement style="Value" x="0" y="4" width="455" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA["Total assets (" + $F{currency_code} + ")"]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" x="455" y="4" width="100" height="18"/>
+                    <textFieldExpression><![CDATA[$V{currencyAssets}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Value" x="0" y="22" width="455" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA["Total liabilities and equity (" + $F{currency_code} + ")"]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" x="455" y="22" width="100" height="18"/>
+                    <textFieldExpression><![CDATA[$V{currencyLiabilities}.add($V{currencyEquity})]]></textFieldExpression>
+                </textField>
+                <line>
+                    <reportElement x="455" y="41" width="100" height="1"/>
+                    <graphicElement><pen lineWidth="1.5" lineStyle="Double"/></graphicElement>
+                </line>
+                <textField>
+                    <reportElement style="Label" x="0" y="44" width="455" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA["Difference (profit or loss not yet closed to equity)"]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="455" y="44" width="100" height="18"/>
+                    <textFieldExpression><![CDATA[$V{currencyAssets}.subtract($V{currencyLiabilities}).subtract($V{currencyEquity})]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupFooter>
+    </group>
+    <group name="accountType">
+        <groupExpression><![CDATA[$F{currency_code} + "|" + $F{classification_enum}]]></groupExpression>
+        <groupHeader>
+            <band height="18">
+                <textField>
+                    <reportElement style="Section" x="0" y="0" width="555" height="18"/>
+                    <textFieldExpression><![CDATA[$F{account_type}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+        <groupFooter>
+            <band height="22">
+                <line>
+                    <reportElement x="455" y="1" width="100" height="1"/>
+                    <graphicElement><pen lineWidth="0.5"/></graphicElement>
+                </line>
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="455" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA["Total " + $F{account_type}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" x="455" y="2" width="100" height="18"/>
+                    <textFieldExpression><![CDATA[$V{typeTotal}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupFooter>
+    </group>
+
+    <title>
+        <band height="70">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="24"/>
+                <textElement textAlignment="Center"><font size="13" isBold="true"/></textElement>
+                <text><![CDATA[Balance Sheet]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Label" x="0" y="26" width="60" height="18"/>
+                <text><![CDATA[Office]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="60" y="26" width="495" height="18"/>
+                <textFieldExpression><![CDATA[$F{selected_office_name} + (Long.valueOf(1L).equals($P{officeId}) ? " (all offices)" : "")]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="46" width="60" height="18"/>
+                <text><![CDATA[As on]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="60" y="46" width="495" height="18"/>
+                <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMM yyyy", $P{REPORT_LOCALE}).format($P{endDate})]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="20">
+            <staticText>
+                <reportElement style="ColumnHeader" x="0" y="0" width="80" height="20"/>
+                <text><![CDATA[GL Code]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="80" y="0" width="375" height="20"/>
+                <text><![CDATA[Account]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="455" y="0" width="100" height="20"/>
+                <textElement textAlignment="Right"/>
+                <text><![CDATA[Balance]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="18">
+            <textField>
+                <reportElement x="0" y="0" width="80" height="18"/>
+                <textFieldExpression><![CDATA[$F{gl_code}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="80" y="0" width="375" height="18"/>
+                <textFieldExpression><![CDATA[$F{account_name}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement style="Amount" x="455" y="0" width="100" height="18"/>
+                <textFieldExpression><![CDATA[$F{balance}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <textField>
+                <reportElement style="Label" x="0" y="2" width="200" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Printed by " + $P{currentUserName}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd MMM yyyy HH:mm">
+                <reportElement style="Label" x="200" y="2" width="155" height="14"/>
+                <textElement textAlignment="Center"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[$P{currentDateTime}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Label" x="355" y="2" width="170" height="14"/>
+                <textElement textAlignment="Right"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Label" x="525" y="2" width="30" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <noData>
+        <band height="40">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="40"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="11"/></textElement>
+                <text><![CDATA[No asset, liability or equity entries for the selected office up to the as-on date.]]></text>
+            </staticText>
+        </band>
+    </noData>
+</jasperReport>

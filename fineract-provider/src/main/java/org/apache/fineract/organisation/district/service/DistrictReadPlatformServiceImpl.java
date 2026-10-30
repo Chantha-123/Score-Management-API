@@ -40,8 +40,7 @@ public class DistrictReadPlatformServiceImpl implements DistrictReadPlatformServ
 
         public String schema() {
             return " d.id as id, d.province_id as provinceId, p.name_eng as provinceNameEng,"
-                    + " d.code as code, d.name_khm as nameKhm, d.name_eng as nameEng"
-                    + " from m_district d"
+                    + " d.code as code, d.name_khm as nameKhm, d.name_eng as nameEng" + " from m_district d"
                     + " inner join m_province p on p.id = d.province_id";
         }
 

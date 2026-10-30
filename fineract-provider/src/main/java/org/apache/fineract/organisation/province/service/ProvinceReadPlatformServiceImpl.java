@@ -38,8 +38,7 @@ public class ProvinceReadPlatformServiceImpl implements ProvinceReadPlatformServ
     private static final class ProvinceMapper implements RowMapper<ProvinceData> {
 
         public String schema() {
-            return " p.id as id, p.code as code, p.name_khm as nameKhm, p.name_eng as nameEng"
-                    + " from m_province p";
+            return " p.id as id, p.code as code, p.name_khm as nameKhm, p.name_eng as nameEng" + " from m_province p";
         }
 
         @Override

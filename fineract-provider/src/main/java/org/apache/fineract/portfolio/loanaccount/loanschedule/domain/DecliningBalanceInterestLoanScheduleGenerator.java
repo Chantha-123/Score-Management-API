@@ -125,31 +125,19 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
                 }
             }
         }
-        
-        
-    	Money feeForPeriod = totalCumulativePrincipal.zero();
-		if(loanApplicationTerms.getInterestMethod().isAnunityFee())
-		{
 
-			final PrincipalInterest resultFee = loanApplicationTerms.calculateTotalFeeForPeriod(
-				calculator,
-				interestCalculationGraceOnRepaymentPeriodFraction, 
-				periodNumber, 
-				mc, 
-				cumulatingInterestDueToGrace,
-				balanceForInterestCalculation, 
-				interestStartDate, 
-				periodEndDate);
-			
-			feeForThisInstallment = interestForThisInstallment.plus(resultFee.interest());
-			cumulatingInterestDueToGrace = resultFee.interestPaymentDueToGrace();
+        Money feeForPeriod = totalCumulativePrincipal.zero();
+        if (loanApplicationTerms.getInterestMethod().isAnunityFee()) {
+
+            final PrincipalInterest resultFee = loanApplicationTerms.calculateTotalFeeForPeriod(calculator,
+                    interestCalculationGraceOnRepaymentPeriodFraction, periodNumber, mc, cumulatingInterestDueToGrace,
+                    balanceForInterestCalculation, interestStartDate, periodEndDate);
+
+            feeForThisInstallment = interestForThisInstallment.plus(resultFee.interest());
+            cumulatingInterestDueToGrace = resultFee.interestPaymentDueToGrace();
             feeForPeriod = feeForThisInstallment;
-			
-			
-			
 
-		}
-		
+        }
 
         final PrincipalInterest result = loanApplicationTerms.calculateTotalInterestForPeriod(calculator,
                 interestCalculationGraceOnRepaymentPeriodFraction, periodNumber, mc, cumulatingInterestDueToGrace,
@@ -179,22 +167,19 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
             interestForThisInstallment = interestForThisInstallment.minus(loanApplicationTerms.getInterestTobeApproppriated());
             principalForThisInstallment = principalForThisInstallment.zero();
         }
-        
-        
-//		susstract principle from fee Charge
-		if(loanApplicationTerms.getInterestMethod().isAnunityFee())
-		{
-			principalForThisInstallment  = principalForThisInstallment.minus(feeForPeriod);
-			
-			Money totalAmount = principalForThisInstallment.plus(interestForPeriod).plus(feeForPeriod);
-			BigDecimal totalAmountfromMoney = totalAmount.getAmount();
-			BigDecimal fixAmount  =	loanApplicationTerms.getFixedEmiAmount();
-			Double varian = fixAmount.doubleValue() - totalAmountfromMoney.doubleValue();
-			principalForThisInstallment = principalForThisInstallment.plus(varian);
-			
-			
-		}
-        
+
+        // susstract principle from fee Charge
+        if (loanApplicationTerms.getInterestMethod().isAnunityFee()) {
+            principalForThisInstallment = principalForThisInstallment.minus(feeForPeriod);
+
+            Money totalAmount = principalForThisInstallment.plus(interestForPeriod).plus(feeForPeriod);
+            BigDecimal totalAmountfromMoney = totalAmount.getAmount();
+            BigDecimal fixAmount = loanApplicationTerms.getFixedEmiAmount();
+            Double varian = fixAmount.doubleValue() - totalAmountfromMoney.doubleValue();
+            principalForThisInstallment = principalForThisInstallment.plus(varian);
+
+        }
+
         // update cumulative fields for principal & interest
         final Money interestBroughtFowardDueToGrace = cumulatingInterestDueToGrace;
         final Money totalCumulativePrincipalToDate = totalCumulativePrincipal.plus(principalForThisInstallment);
@@ -204,7 +189,7 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
                 totalCumulativePrincipalToDate, periodNumber);
 
         PrincipalInterest principalInterest = new PrincipalInterest(principalForThisInstallment, interestForThisInstallment,
-                interestBroughtFowardDueToGrace,null);
+                interestBroughtFowardDueToGrace, null);
         principalInterest.setRescheduleInterestPortion(loanApplicationTerms.getInterestTobeApproppriated());
         return principalInterest;
     }

@@ -60,8 +60,8 @@ public class DailySpotRate extends AbstractPersistableCustom {
 
     protected DailySpotRate() {}
 
-    private DailySpotRate(final Office office, final String currencyCode, final LocalDate rateDate,
-            final BigDecimal spotRate, final BigDecimal buyingRate, final BigDecimal sellingRate) {
+    private DailySpotRate(final Office office, final String currencyCode, final LocalDate rateDate, final BigDecimal spotRate,
+            final BigDecimal buyingRate, final BigDecimal sellingRate) {
         this.office = office;
         this.currencyCode = currencyCode;
         this.rateDate = rateDate;

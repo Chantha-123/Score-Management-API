@@ -62,8 +62,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProvinceApiResource {
 
-    private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList("id", "code", "nameKhm", "nameEng"));
+    private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(Arrays.asList("id", "code", "nameKhm", "nameEng"));
 
     private final String resourceNameForPermission = "PROVINCE";
 

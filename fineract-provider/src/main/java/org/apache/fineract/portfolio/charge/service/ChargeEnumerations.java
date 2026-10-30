@@ -85,6 +85,10 @@ public final class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeTimeType.TRANCHE_DISBURSEMENT.getValue().longValue(),
                         ChargeTimeType.TRANCHE_DISBURSEMENT.getCode(), "Tranche Disbursement");
             break;
+            case ON_DEMAND:
+                optionData = new EnumOptionData(ChargeTimeType.ON_DEMAND.getValue().longValue(), ChargeTimeType.ON_DEMAND.getCode(),
+                        "On Demand");
+            break;
             case SHAREACCOUNT_ACTIVATION:
                 optionData = new EnumOptionData(ChargeTimeType.SHAREACCOUNT_ACTIVATION.getValue().longValue(),
                         ChargeTimeType.SHAREACCOUNT_ACTIVATION.getCode(), "Share Account Activate");

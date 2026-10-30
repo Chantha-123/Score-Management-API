@@ -40,8 +40,7 @@ public class CommuneReadPlatformServiceImpl implements CommuneReadPlatformServic
 
         public String schema() {
             return " c.id as id, c.district_id as districtId, d.name_eng as districtNameEng,"
-                    + " c.code as code, c.name_khm as nameKhm, c.name_eng as nameEng"
-                    + " from m_commune c"
+                    + " c.code as code, c.name_khm as nameKhm, c.name_eng as nameEng" + " from m_commune c"
                     + " inner join m_district d on d.id = c.district_id";
         }
 

@@ -744,6 +744,10 @@ public class Charge extends AbstractPersistableCustom {
                 || ChargeTimeType.fromInt(this.chargeTimeType).equals(ChargeTimeType.TRANCHE_DISBURSEMENT);
     }
 
+    public boolean isOnDemand() {
+        return ChargeTimeType.fromInt(this.chargeTimeType).isOnDemand();
+    }
+
     public TaxGroup getTaxGroup() {
         return this.taxGroup;
     }

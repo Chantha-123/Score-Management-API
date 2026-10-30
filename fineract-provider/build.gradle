@@ -224,8 +224,10 @@ bootRun {
         implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.6'
         implementation 'org.postgresql:postgresql:42.4.0'
     }
-    
-    jvmArgs(["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005"])
+
+    jvmArgs([
+        "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8005"
+    ])
 }
 
 springBoot {

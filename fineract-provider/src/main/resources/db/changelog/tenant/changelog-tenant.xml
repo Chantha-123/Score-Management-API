@@ -51,4 +51,11 @@
     <include file="parts/0034_add_batch_principal_paydown_permission.xml" relativeToChangelogFile="true"/>
     <include file="parts/0035_add_m_loan_batch_principal_paydown_table.xml" relativeToChangelogFile="true"/>
     <include file="parts/0036_add_m_loan_simi_principal_grace.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0037_jasper_loan_transaction_receipt.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0038_jasper_loan_transaction_receipt_khmer.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0039_jasper_loan_portfolio_reports_1.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0040_jasper_loan_portfolio_reports_2.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0041_jasper_accounting_reports.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0042_jasper_loan_repayment_schedule_khmer.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0043_add_loan_charge_fee_permission.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

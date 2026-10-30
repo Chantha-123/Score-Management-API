@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- Trial Balance, Income Statement, Balance Sheet and GeneralLedgerReport were Pentaho reports (no SQL, no Pentaho
+         plugin installed). They now run from reports/trial-balance.jrxml, income-statement.jrxml, balance-sheet.jrxml and
+         generalledgerreport.jrxml, with the SQL of the "... Table" reports, which stay Table reports. -->
+    <changeSet author="fineract" id="1">
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <!-- Report.validate rejects report_sql on non-Table/Chart types -->
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Accounting"/>
+            <column name="description" value="Trial balance by account type and currency for an office (1 = all offices) and period (R_officeId, R_startDate, R_endDate)"/>
+            <where>report_name = 'Trial Balance'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Accounting"/>
+            <column name="description" value="Profit and loss statement by currency for an office (1 = all offices) and period (R_officeId, R_startDate, R_endDate)"/>
+            <where>report_name = 'Income Statement'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Accounting"/>
+            <column name="description" value="Assets, liabilities and equity by currency for an office (1 = all offices) as on a date (R_officeId, R_endDate)"/>
+            <where>report_name = 'Balance Sheet'</where>
+        </update>
+        <update tableName="stretchy_report">
+            <column name="report_type" value="Jasper"/>
+            <column name="report_sql" valueComputed="NULL"/>
+            <column name="report_category" value="Accounting"/>
+            <column name="description" value="Journal entries of one GL account with opening and running balance for an office hierarchy and period (R_GLAccountNO, R_officeId, R_startDate, R_endDate)"/>
+            <where>report_name = 'GeneralLedgerReport'</where>
+        </update>
+    </changeSet>
+
+    <!-- The templates use the parameter_variable of each linked stretchy_parameter (officeId, startDate, endDate,
+         GLAccountNO). The Pentaho links used labels as report_parameter_name (branch, fromDate, toDate, date, account):
+         align them with the variables, as on the Table versions. -->
+    <changeSet author="fineract" id="2">
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="officeId"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Trial Balance') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="startDate"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Trial Balance') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'startDateSelect')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="endDate"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Trial Balance') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="officeId"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Income Statement') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="startDate"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Income Statement') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'startDateSelect')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="endDate"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Income Statement') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="officeId"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Balance Sheet') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="endDate"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'Balance Sheet') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="GLAccountNO"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'SelectGLAccountNO')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="officeId"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="startDate"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'startDateSelect')</where>
+        </update>
+        <update tableName="stretchy_report_parameter">
+            <column name="report_parameter_name" value="endDate"/>
+            <where>report_id = (SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport') AND parameter_id = (SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')</where>
+        </update>
+    </changeSet>
+
+    <!-- Add any parameter link that is missing (one changeSet per link, skipped when the link exists) -->
+    <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Trial Balance' AND p.parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Trial Balance'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Trial Balance')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')"/>
+            <column name="report_parameter_name" value="officeId"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="4">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Trial Balance' AND p.parameter_name = 'startDateSelect'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Trial Balance'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'startDateSelect'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Trial Balance')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'startDateSelect')"/>
+            <column name="report_parameter_name" value="startDate"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="5">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Trial Balance' AND p.parameter_name = 'endDateSelect'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Trial Balance'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'endDateSelect'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Trial Balance')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')"/>
+            <column name="report_parameter_name" value="endDate"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="6">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Income Statement' AND p.parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Income Statement'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Income Statement')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')"/>
+            <column name="report_parameter_name" value="officeId"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="7">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Income Statement' AND p.parameter_name = 'startDateSelect'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Income Statement'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'startDateSelect'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Income Statement')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'startDateSelect')"/>
+            <column name="report_parameter_name" value="startDate"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="8">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Income Statement' AND p.parameter_name = 'endDateSelect'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Income Statement'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'endDateSelect'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Income Statement')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')"/>
+            <column name="report_parameter_name" value="endDate"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="9">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Balance Sheet' AND p.parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Balance Sheet'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Balance Sheet')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')"/>
+            <column name="report_parameter_name" value="officeId"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="10">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'Balance Sheet' AND p.parameter_name = 'endDateSelect'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'Balance Sheet'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'endDateSelect'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'Balance Sheet')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')"/>
+            <column name="report_parameter_name" value="endDate"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="11">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'GeneralLedgerReport' AND p.parameter_name = 'SelectGLAccountNO'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'GeneralLedgerReport'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'SelectGLAccountNO'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'SelectGLAccountNO')"/>
+            <column name="report_parameter_name" value="GLAccountNO"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="12">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'GeneralLedgerReport' AND p.parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'GeneralLedgerReport'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'OfficeIdSelectOne')"/>
+            <column name="report_parameter_name" value="officeId"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="13">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'GeneralLedgerReport' AND p.parameter_name = 'startDateSelect'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'GeneralLedgerReport'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'startDateSelect'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'startDateSelect')"/>
+            <column name="report_parameter_name" value="startDate"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="14">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report_parameter rp JOIN stretchy_report r ON r.id = rp.report_id JOIN stretchy_parameter p ON p.id = rp.parameter_id WHERE r.report_name = 'GeneralLedgerReport' AND p.parameter_name = 'endDateSelect'</sqlCheck>
+            <!-- and the report and parameter exist, so the computed ids are not NULL -->
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_report WHERE report_name = 'GeneralLedgerReport'</sqlCheck>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM stretchy_parameter WHERE parameter_name = 'endDateSelect'</sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report_parameter">
+            <column name="report_id" valueComputed="(SELECT id FROM stretchy_report WHERE report_name = 'GeneralLedgerReport')"/>
+            <column name="parameter_id" valueComputed="(SELECT id FROM stretchy_parameter WHERE parameter_name = 'endDateSelect')"/>
+            <column name="report_parameter_name" value="endDate"/>
+        </insert>
+    </changeSet>
+
+    <!-- READ_ permissions (one changeSet per report, skipped when it exists; READ_GeneralLedgerReport is missing from the initial data) -->
+    <changeSet author="fineract" id="15">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Trial Balance'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Trial Balance"/>
+            <column name="entity_name" value="Trial Balance"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="16">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Income Statement'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Income Statement"/>
+            <column name="entity_name" value="Income Statement"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="17">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_Balance Sheet'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_Balance Sheet"/>
+            <column name="entity_name" value="Balance Sheet"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+    <changeSet author="fineract" id="18">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_GeneralLedgerReport'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="report"/>
+            <column name="code" value="READ_GeneralLedgerReport"/>
+            <column name="entity_name" value="GeneralLedgerReport"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

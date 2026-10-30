@@ -18,12 +18,12 @@
  */
 package org.apache.fineract.portfolio.loanaccount.batchprincipalpaydown.data;
 
+import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.ApiParameterError;
@@ -55,10 +55,12 @@ public class LoanBatchPrincipalPaydownDataValidator {
         }
 
         final Type typeToken = new TypeToken<java.util.Map<String, Object>>() {}.getType();
-        this.fromJsonHelper.checkForUnsupportedParameters(typeToken, json, BatchPrincipalPaydownApiConstants.CREATE_REQUEST_DATA_PARAMETERS);
+        this.fromJsonHelper.checkForUnsupportedParameters(typeToken, json,
+                BatchPrincipalPaydownApiConstants.CREATE_REQUEST_DATA_PARAMETERS);
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-        final DataValidatorBuilder dataValidatorBuilder = new DataValidatorBuilder(dataValidationErrors).resource("loan.batchprincipalpaydown");
+        final DataValidatorBuilder dataValidatorBuilder = new DataValidatorBuilder(dataValidationErrors)
+                .resource("loan.batchprincipalpaydown");
 
         if (!loan.status().isActive()) {
             dataValidatorBuilder.reset().failWithCodeNoParameterAddedToErrorCode("loan.is.not.active", "Loan is not active");
@@ -66,8 +68,7 @@ public class LoanBatchPrincipalPaydownDataValidator {
 
         final LocalDate transactionDate = command
                 .localDateValueOfParameterNamed(BatchPrincipalPaydownApiConstants.transactionDateParamName);
-        dataValidatorBuilder.reset().parameter(BatchPrincipalPaydownApiConstants.transactionDateParamName).value(transactionDate)
-                .notNull();
+        dataValidatorBuilder.reset().parameter(BatchPrincipalPaydownApiConstants.transactionDateParamName).value(transactionDate).notNull();
         if (transactionDate != null) {
             if (transactionDate.isAfter(DateUtils.getBusinessLocalDate())) {
                 dataValidatorBuilder.reset().parameter(BatchPrincipalPaydownApiConstants.transactionDateParamName)
@@ -88,7 +89,8 @@ public class LoanBatchPrincipalPaydownDataValidator {
             }
         }
 
-        final BigDecimal principalAmount = command.bigDecimalValueOfParameterNamed(BatchPrincipalPaydownApiConstants.principalAmountParamName);
+        final BigDecimal principalAmount = command
+                .bigDecimalValueOfParameterNamed(BatchPrincipalPaydownApiConstants.principalAmountParamName);
         dataValidatorBuilder.reset().parameter(BatchPrincipalPaydownApiConstants.principalAmountParamName).value(principalAmount).notNull()
                 .positiveAmount();
 

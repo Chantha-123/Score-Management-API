@@ -26,15 +26,8 @@ import java.util.Set;
  ***/
 public enum DailySpotRateJsonInputParams {
 
-    ID("id"),
-    RATE_DATE("rateDate"),
-    OFFICE_ID("officeId"),
-    CURRENCY_CODE("currencyCode"),
-    SPOT_RATE("spotRate"),
-    BUYING_RATE("buyingRate"),
-    SELLING_RATE("sellingRate"),
-    LOCALE("locale"),
-    DATE_FORMAT("dateFormat");
+    ID("id"), RATE_DATE("rateDate"), OFFICE_ID("officeId"), CURRENCY_CODE("currencyCode"), SPOT_RATE("spotRate"), BUYING_RATE(
+            "buyingRate"), SELLING_RATE("sellingRate"), LOCALE("locale"), DATE_FORMAT("dateFormat");
 
     private final String value;
 

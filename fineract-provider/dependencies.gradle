@@ -121,6 +121,12 @@ dependencies {
         exclude group: 'com.sun.activation'
     }
 
+    // Jasper report templates (src/main/resources/reports/*.jrxml); commons-logging is provided by spring-jcl
+    implementation ('net.sf.jasperreports:jasperreports') {
+        exclude group: 'commons-logging'
+    }
+    runtimeOnly 'net.sf.jasperreports:jasperreports-fonts'
+
     implementation('org.owasp.esapi:esapi') {
         exclude group: 'org.slf4j'
         exclude group: 'log4j'

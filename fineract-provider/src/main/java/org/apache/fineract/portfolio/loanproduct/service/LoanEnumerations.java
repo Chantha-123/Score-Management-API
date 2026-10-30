@@ -299,16 +299,15 @@ public final class LoanEnumerations {
                         InterestMethod.DECLINING_BALANCE.getCode(), "Declining Balance");
             break;
             case BALLOON:
-                optionData = new EnumOptionData(InterestMethod.BALLOON.getValue().longValue(),
-                        InterestMethod.BALLOON.getCode(), "Balloon");
+                optionData = new EnumOptionData(InterestMethod.BALLOON.getValue().longValue(), InterestMethod.BALLOON.getCode(), "Balloon");
             break;
             case SEMI_BALOON:
-                optionData = new EnumOptionData(InterestMethod.SEMI_BALOON.getValue().longValue(),
-                        InterestMethod.SEMI_BALOON.getCode(), "Semi Ballon");
+                optionData = new EnumOptionData(InterestMethod.SEMI_BALOON.getValue().longValue(), InterestMethod.SEMI_BALOON.getCode(),
+                        "Semi Ballon");
             break;
             case AMORTIZATION:
-                optionData = new EnumOptionData(InterestMethod.AMORTIZATION.getValue().longValue(),
-                        InterestMethod.AMORTIZATION.getCode(), "Amortizaion");
+                optionData = new EnumOptionData(InterestMethod.AMORTIZATION.getValue().longValue(), InterestMethod.AMORTIZATION.getCode(),
+                        "Amortizaion");
             break;
             case AMORTIZATION_FEE:
                 optionData = new EnumOptionData(InterestMethod.AMORTIZATION_FEE.getValue().longValue(),

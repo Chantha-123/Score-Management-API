@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+
+<!-- Stretchy report "Client Listing(Pentaho)" (report_type = Jasper), converted from the SQL of the Table report "Client Listing".
+     Run with R_officeId. -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="client-listing-pentaho" pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="NoDataSection">
+
+    <!-- Names may be Khmer: lay out Khmer runs with Java's text engine (OpenPDF cannot shape them) -->
+    <property name="net.sf.jasperreports.export.pdf.glyph.renderer.blocks" value="khmer"/>
+    <!-- CSV/XLSX: keep only column headers, detail rows and totals (no repeated titles / page footers) -->
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.title" value="title"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+
+    <!-- Font set from fonts/battambang/fonts.xml: DejaVu Sans, with Battambang for Khmer characters.
+         Battambang lines need about 2x the font size in height, so 8pt rows are 18pt tall. -->
+    <style name="Base" isDefault="true" fontName="DejaVu Sans Khmer" fontSize="8" isBlankWhenNull="true">
+        <box leftPadding="2" rightPadding="2"/>
+    </style>
+    <style name="Label" style="Base" forecolor="#555555"/>
+    <style name="Value" style="Base" isBold="true"/>
+    <style name="ColumnHeader" style="Base" isBold="true" mode="Opaque" backcolor="#E6E6E6" vTextAlign="Middle"/>
+    <style name="Amount" style="Base" hTextAlign="Right" pattern="#,##0.00"/>
+    <style name="Total" style="Amount" isBold="true"/>
+    <style name="Count" style="Base" hTextAlign="Right" pattern="#,##0"/>
+    <style name="TotalCount" style="Count" isBold="true"/>
+
+    <!-- Supplied by the service on every run -->
+    <parameter name="currentDate" class="java.util.Date"/>
+    <parameter name="currentDateTime" class="java.util.Date"/>
+    <parameter name="currentUserHierarchy" class="java.lang.String"/>
+    <parameter name="currentUserName" class="java.lang.String"/>
+    <!-- Stretchy parameter variables; defaults apply when the R_ value is missing or blank -->
+    <parameter name="officeId" class="java.lang.Long">
+        <!-- OfficeIdSelectOne has no "All": default to the head office (root of the hierarchy) -->
+        <defaultValueExpression><![CDATA[1L]]></defaultValueExpression>
+    </parameter>
+
+    <queryString>
+        <![CDATA[
+SELECT (SELECT so.name FROM m_office so WHERE so.id = $P{officeId}) AS selected_office_name,
+       ounder.id AS office_id,
+       CONCAT(REPEAT('..', LENGTH(ounder.hierarchy) - LENGTH(REPLACE(ounder.hierarchy, '.', '')) - 1), ounder.name) AS office_name,
+       c.account_no AS client_account_no,
+       c.display_name AS client_name,
+       r.enum_message_property AS client_status,
+       c.activation_date AS activation_date,
+       c.external_id AS external_id
+FROM m_office o
+JOIN m_office ounder ON ounder.hierarchy LIKE CONCAT(o.hierarchy, '%')
+                    AND ounder.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+JOIN m_client c ON c.office_id = ounder.id
+LEFT JOIN r_enum_value r ON r.enum_name = 'status_enum' AND r.enum_id = c.status_enum
+WHERE o.id = $P{officeId}
+ORDER BY ounder.hierarchy, c.account_no
+        ]]>
+    </queryString>
+
+    <!-- Field names = SQL aliases, lowercase snake_case (PostgreSQL folds unquoted aliases to lowercase) -->
+    <field name="selected_office_name" class="java.lang.String"/>
+    <field name="office_id" class="java.lang.Long"/>
+    <field name="office_name" class="java.lang.String"/>
+    <field name="client_account_no" class="java.lang.String"/>
+    <field name="client_name" class="java.lang.String"/>
+    <field name="client_status" class="java.lang.String"/>
+    <field name="activation_date" class="java.util.Date"/>
+    <field name="external_id" class="java.lang.String"/>
+
+    <group name="office">
+        <groupExpression><![CDATA[$F{office_id}]]></groupExpression>
+        <groupHeader>
+            <band height="22">
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="555" height="18"/>
+                    <textFieldExpression><![CDATA[$F{office_name}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+        <groupFooter>
+        <band height="22">
+                <line>
+                    <reportElement x="0" y="1" width="555" height="1"/>
+                    <graphicElement><pen lineWidth="0.5"/></graphicElement>
+                </line>
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="555" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA[$F{office_name} + ": " + $V{office_COUNT} + " clients"]]></textFieldExpression>
+                </textField>
+        </band>
+        </groupFooter>
+    </group>
+
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="24"/>
+                <textElement textAlignment="Center"><font size="13" isBold="true"/></textElement>
+                <text><![CDATA[Client Listing]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Label" x="0" y="26" width="80" height="18"/>
+                <text><![CDATA[Office]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="80" y="26" width="187" height="18"/>
+                <textFieldExpression><![CDATA[$F{selected_office_name}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="22">
+            <staticText>
+                <reportElement style="ColumnHeader" x="0" y="0" width="80" height="22"/>
+                <text><![CDATA[Client Account]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="80" y="0" width="220" height="22"/>
+                <text><![CDATA[Name]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="300" y="0" width="90" height="22"/>
+                <text><![CDATA[Status]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="390" y="0" width="70" height="22"/>
+                <text><![CDATA[Activation]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="460" y="0" width="95" height="22"/>
+                <text><![CDATA[External Id]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="18">
+                <textField>
+                    <reportElement x="0" y="0" width="80" height="18"/>
+                    <textFieldExpression><![CDATA[$F{client_account_no}]]></textFieldExpression>
+                </textField>
+                <textField textAdjust="StretchHeight">
+                    <reportElement x="80" y="0" width="220" height="18"/>
+                    <textFieldExpression><![CDATA[$F{client_name}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement x="300" y="0" width="90" height="18"/>
+                    <textFieldExpression><![CDATA[$F{client_status}]]></textFieldExpression>
+                </textField>
+                <textField pattern="dd/MM/yyyy">
+                    <reportElement x="390" y="0" width="70" height="18"/>
+                    <textFieldExpression><![CDATA[$F{activation_date}]]></textFieldExpression>
+                </textField>
+                <textField textAdjust="StretchHeight">
+                    <reportElement x="460" y="0" width="95" height="18"/>
+                    <textFieldExpression><![CDATA[$F{external_id}]]></textFieldExpression>
+                </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <textField>
+                <reportElement style="Label" x="0" y="2" width="300" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Printed by " + $P{currentUserName}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd MMM yyyy HH:mm">
+                <reportElement style="Label" x="177" y="2" width="200" height="14"/>
+                <textElement textAlignment="Center"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[$P{currentDateTime}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Label" x="355" y="2" width="170" height="14"/>
+                <textElement textAlignment="Right"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Label" x="525" y="2" width="30" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <summary>
+        <band height="24">
+            <line>
+                <reportElement x="0" y="2" width="555" height="1"/>
+            </line>
+            <textField>
+                <reportElement style="Value" x="0" y="4" width="555" height="18"/>
+                <textFieldExpression><![CDATA["Total, " + $V{REPORT_COUNT} + " clients"]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+
+    <noData>
+        <band height="40">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="40"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="11"/></textElement>
+                <text><![CDATA[No clients for the selected office.]]></text>
+            </staticText>
+        </band>
+    </noData>
+</jasperReport>

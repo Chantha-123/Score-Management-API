@@ -126,6 +126,11 @@ public class LoanChargeAssembler {
                             throw new LoanChargeCannotBeAddedException("loanCharge", "overdue.charge", defaultUserMessage, null,
                                     chargeDefinition.getName());
                         }
+                        if (chargeDefinition.isOnDemand()) {
+                            final String defaultUserMessage = "On-demand charge can only be applied through the chargeFee transaction.";
+                            throw new LoanChargeCannotBeAddedException("loanCharge", "on.demand.charge", defaultUserMessage, null,
+                                    chargeDefinition.getName());
+                        }
 
                         ChargeTimeType chargeTime = null;
                         if (chargeTimeType != null) {

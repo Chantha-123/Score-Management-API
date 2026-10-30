@@ -29,8 +29,7 @@ import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.organisation.province.api.ProvinceJsonInputParams;
 
 @Entity
-@Table(name = "m_province", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "code" }, name = "uq_province_code") })
+@Table(name = "m_province", uniqueConstraints = { @UniqueConstraint(columnNames = { "code" }, name = "uq_province_code") })
 public class Province extends AbstractPersistableCustom {
 
     @Column(name = "code", nullable = false, length = 20)

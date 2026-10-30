@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<!-- Stretchy report "Loan Transaction Receipt Khmer" (report_type = Jasper). Run with R_transactionId=<m_loan_transaction.id>.
+     Fully Khmer copy of loan-transaction-receipt.jrxml: Khmer labels, Khmer numerals, Khmer month names and currency names,
+     using the bundled Battambang font (fonts/battambang). Office, payment type and user names print as stored. -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="loan-transaction-receipt-khmer" pageWidth="420" pageHeight="595" columnWidth="364"
+              leftMargin="28" rightMargin="28" topMargin="28" bottomMargin="28" whenNoDataType="NoDataSection">
+
+    <!-- OpenPDF does not shape complex scripts; lay out Khmer runs with Java's text engine so coeng subscripts and vowels render correctly -->
+    <property name="net.sf.jasperreports.export.pdf.glyph.renderer.blocks" value="khmer"/>
+    <import value="org.apache.commons.lang3.StringUtils"/>
+
+    <style name="Base" isDefault="true" fontName="Battambang" fontSize="9"/>
+    <style name="Label" style="Base" forecolor="#555555"/>
+    <style name="Value" style="Base" isBold="true"/>
+
+    <parameter name="transactionId" class="java.lang.Long"/>
+    <parameter name="currentUserHierarchy" class="java.lang.String"/>
+    <parameter name="currentUserName" class="java.lang.String"/>
+    <!-- Western digits and their Khmer numerals, for StringUtils.replaceChars -->
+    <parameter name="LATIN_DIGITS" class="java.lang.String" isForPrompting="false">
+        <defaultValueExpression><![CDATA["0123456789"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="KHMER_DIGITS" class="java.lang.String" isForPrompting="false">
+        <defaultValueExpression><![CDATA["០១២៣៤៥៦៧៨៩"]]></defaultValueExpression>
+    </parameter>
+
+    <queryString>
+        <![CDATA[
+SELECT tr.id AS transaction_id,
+       tr.transaction_date,
+       tr.amount,
+       COALESCE(tr.principal_portion_derived, 0) AS principal_portion,
+       COALESCE(tr.interest_portion_derived, 0) AS interest_portion,
+       COALESCE(tr.fee_charges_portion_derived, 0) AS fee_portion,
+       COALESCE(tr.penalty_charges_portion_derived, 0) AS penalty_portion,
+       COALESCE(tr.outstanding_loan_balance_derived, 0) AS outstanding_balance,
+       CASE tr.transaction_type_enum
+           WHEN 1 THEN 'ការបើកប្រាក់កម្ចី'
+           WHEN 2 THEN 'ការសងប្រាក់'
+           WHEN 5 THEN 'ការសងប្រាក់ពេលបើកកម្ចី'
+           WHEN 8 THEN 'ការសងបំណុលដែលបានលុបចោល'
+           WHEN 17 THEN 'ការបង់កម្រៃសេវា'
+           WHEN 24 THEN 'ការសងប្រាក់ដើម'
+           ELSE 'ប្រតិបត្តិការកម្ចី'
+       END AS transaction_type,
+       CASE l.currency_code
+           WHEN 'USD' THEN 'ដុល្លារ'
+           WHEN 'KHR' THEN 'រៀល'
+           WHEN 'THB' THEN 'បាត'
+           ELSE l.currency_code
+       END AS currency_name,
+       l.account_no AS loan_account_no,
+       l.currency_digits,
+       COALESCE(c.display_name, g.display_name) AS client_name,
+       c.account_no AS client_account_no,
+       o.name AS office_name,
+       pd.receipt_number,
+       pt.value AS payment_type
+FROM m_loan_transaction tr
+JOIN m_loan l ON l.id = tr.loan_id
+JOIN m_office o ON o.id = tr.office_id
+LEFT JOIN m_client c ON c.id = l.client_id
+LEFT JOIN m_group g ON g.id = l.group_id
+LEFT JOIN m_payment_detail pd ON pd.id = tr.payment_detail_id
+LEFT JOIN m_payment_type pt ON pt.id = pd.payment_type_id
+WHERE tr.id = $P{transactionId}
+  AND o.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+        ]]>
+    </queryString>
+
+    <field name="transaction_id" class="java.lang.Long"/>
+    <field name="transaction_date" class="java.util.Date"/>
+    <field name="amount" class="java.math.BigDecimal"/>
+    <field name="principal_portion" class="java.math.BigDecimal"/>
+    <field name="interest_portion" class="java.math.BigDecimal"/>
+    <field name="fee_portion" class="java.math.BigDecimal"/>
+    <field name="penalty_portion" class="java.math.BigDecimal"/>
+    <field name="outstanding_balance" class="java.math.BigDecimal"/>
+    <field name="transaction_type" class="java.lang.String"/>
+    <field name="currency_name" class="java.lang.String"/>
+    <field name="loan_account_no" class="java.lang.String"/>
+    <field name="currency_digits" class="java.lang.Integer"/>
+    <field name="client_name" class="java.lang.String"/>
+    <field name="client_account_no" class="java.lang.String"/>
+    <field name="office_name" class="java.lang.String"/>
+    <field name="receipt_number" class="java.lang.String"/>
+    <field name="payment_type" class="java.lang.String"/>
+
+    <!-- Amounts keep the 1,234.56 separators used on Cambodian dollar receipts; only the digits become Khmer -->
+    <variable name="amountFormat" class="java.text.DecimalFormat">
+        <variableExpression><![CDATA[new java.text.DecimalFormat($F{currency_digits} == null || $F{currency_digits}.intValue() > 0 ? "#,##0.00" : "#,##0")]]></variableExpression>
+    </variable>
+    <!-- Khmer month names regardless of the request locale, in the tenant time zone -->
+    <variable name="khmerDate" class="java.time.format.DateTimeFormatter">
+        <variableExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("dd MMMM yyyy", new java.util.Locale("km")).withZone($P{REPORT_TIME_ZONE}.toZoneId())]]></variableExpression>
+    </variable>
+
+    <detail>
+        <band height="470">
+            <!-- Header. Battambang needs about 2x the font size in line height, otherwise Jasper drops the line -->
+            <textField>
+                <reportElement x="0" y="0" width="364" height="28"/>
+                <textElement textAlignment="Center"><font size="13" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$F{office_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="28" width="364" height="30"/>
+                <textElement textAlignment="Center"><font size="14" isBold="true"/></textElement>
+                <text><![CDATA[បង្កាន់ដៃបង់ប្រាក់]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="60" width="364" height="1"/>
+            </line>
+
+            <!-- Receipt identification -->
+            <staticText>
+                <reportElement style="Label" x="0" y="64" width="130" height="18"/>
+                <text><![CDATA[លេខបង្កាន់ដៃ]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="130" y="64" width="234" height="18"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($F{receipt_number} != null ? $F{receipt_number} : String.valueOf($F{transaction_id}), $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="84" width="130" height="18"/>
+                <text><![CDATA[កាលបរិច្ឆេទប្រតិបត្តិការ]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="130" y="84" width="234" height="18"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($V{khmerDate}.format(java.time.Instant.ofEpochMilli($F{transaction_date}.getTime())), $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="104" width="130" height="18"/>
+                <text><![CDATA[ប្រភេទប្រតិបត្តិការ]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="130" y="104" width="234" height="18"/>
+                <textFieldExpression><![CDATA[$F{transaction_type}]]></textFieldExpression>
+            </textField>
+
+            <!-- Client and account -->
+            <staticText>
+                <reportElement style="Label" x="0" y="132" width="130" height="18"/>
+                <text><![CDATA[ឈ្មោះអតិថិជន]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="130" y="132" width="234" height="18"/>
+                <textFieldExpression><![CDATA[$F{client_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="152" width="130" height="18"/>
+                <text><![CDATA[លេខអតិថិជន]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="130" y="152" width="234" height="18"/>
+                <textFieldExpression><![CDATA[$F{client_account_no} != null ? StringUtils.replaceChars($F{client_account_no}, $P{LATIN_DIGITS}, $P{KHMER_DIGITS}) : "-"]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="172" width="130" height="18"/>
+                <text><![CDATA[លេខគណនីកម្ចី]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="130" y="172" width="234" height="18"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($F{loan_account_no}, $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="192" width="130" height="18"/>
+                <text><![CDATA[វិធីសាស្ត្របង់ប្រាក់]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="130" y="192" width="234" height="18"/>
+                <textFieldExpression><![CDATA[$F{payment_type} != null ? $F{payment_type} : "-"]]></textFieldExpression>
+            </textField>
+
+            <!-- Amount: Khmer puts the currency name after the number -->
+            <rectangle>
+                <reportElement x="0" y="220" width="364" height="38" backcolor="#F2F2F2"/>
+                <graphicElement><pen lineWidth="0.5"/></graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="10" y="220" width="150" height="38"/>
+                <textElement verticalAlignment="Middle"><font size="11" isBold="true"/></textElement>
+                <text><![CDATA[ចំនួនទឹកប្រាក់បានបង់]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="160" y="220" width="194" height="38"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="14" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($V{amountFormat}.format($F{amount}), $P{LATIN_DIGITS}, $P{KHMER_DIGITS}) + " " + $F{currency_name}]]></textFieldExpression>
+            </textField>
+
+            <!-- Allocation breakdown -->
+            <staticText>
+                <reportElement style="Label" x="0" y="270" width="200" height="18"/>
+                <text><![CDATA[ប្រាក់ដើម]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Base" x="200" y="270" width="164" height="18"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($V{amountFormat}.format($F{principal_portion}), $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="290" width="200" height="18"/>
+                <text><![CDATA[ការប្រាក់]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Base" x="200" y="290" width="164" height="18"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($V{amountFormat}.format($F{interest_portion}), $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="310" width="200" height="18"/>
+                <text><![CDATA[កម្រៃសេវា]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Base" x="200" y="310" width="164" height="18"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($V{amountFormat}.format($F{fee_portion}), $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="330" width="200" height="18"/>
+                <text><![CDATA[ប្រាក់ពិន័យ]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Base" x="200" y="330" width="164" height="18"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($V{amountFormat}.format($F{penalty_portion}), $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="352" width="364" height="1"/>
+                <graphicElement><pen lineWidth="0.5" lineStyle="Dashed"/></graphicElement>
+            </line>
+            <staticText>
+                <reportElement style="Label" x="0" y="358" width="200" height="18"/>
+                <text><![CDATA[សមតុល្យប្រាក់កម្ចីនៅសល់]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="200" y="358" width="164" height="18"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[StringUtils.replaceChars($V{amountFormat}.format($F{outstanding_balance}), $P{LATIN_DIGITS}, $P{KHMER_DIGITS}) + " " + $F{currency_name}]]></textFieldExpression>
+            </textField>
+
+            <!-- Signatures -->
+            <line>
+                <reportElement x="0" y="430" width="150" height="1"/>
+                <graphicElement><pen lineWidth="0.5"/></graphicElement>
+            </line>
+            <staticText>
+                <reportElement style="Label" x="0" y="434" width="150" height="18"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[ហត្ថលេខាអតិថិជន]]></text>
+            </staticText>
+            <line>
+                <reportElement x="214" y="430" width="150" height="1"/>
+                <graphicElement><pen lineWidth="0.5"/></graphicElement>
+            </line>
+            <staticText>
+                <reportElement style="Label" x="214" y="434" width="150" height="18"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[ហត្ថលេខាបេឡាករ]]></text>
+            </staticText>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <textField>
+                <reportElement style="Label" x="0" y="2" width="200" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["បោះពុម្ពដោយ " + $P{currentUserName}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Label" x="200" y="2" width="164" height="14"/>
+                <textElement textAlignment="Right"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["ថ្ងៃបោះពុម្ព " + StringUtils.replaceChars(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone($P{REPORT_TIME_ZONE}.toZoneId()).format(java.time.Instant.now()), $P{LATIN_DIGITS}, $P{KHMER_DIGITS})]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <noData>
+        <band height="48">
+            <staticText>
+                <reportElement x="0" y="0" width="364" height="48"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="11"/></textElement>
+                <text><![CDATA[រកមិនឃើញប្រតិបត្តិការ ឬប្រតិបត្តិការនេះមិនស្ថិតក្នុងការិយាល័យរបស់អ្នក។]]></text>
+            </staticText>
+        </band>
+    </noData>
+</jasperReport>

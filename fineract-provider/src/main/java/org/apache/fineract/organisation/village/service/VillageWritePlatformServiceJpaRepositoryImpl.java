@@ -93,7 +93,8 @@ public class VillageWritePlatformServiceJpaRepositoryImpl implements VillageWrit
                 this.villageRepository.saveAndFlush(village);
             }
 
-            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(villageId).with(changesOnly).build();
+            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(villageId).with(changesOnly)
+                    .build();
         } catch (final JpaSystemException | DataIntegrityViolationException dve) {
             final Throwable throwable = dve.getMostSpecificCause();
             handleDataIntegrityIssues(throwable, dve);

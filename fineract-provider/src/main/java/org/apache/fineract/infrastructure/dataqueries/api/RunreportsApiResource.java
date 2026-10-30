@@ -73,7 +73,9 @@ public class RunreportsApiResource {
     @GET
     @Path("{reportName}")
     @Consumes({ MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.APPLICATION_JSON, "text/csv", "application/vnd.ms-excel", "application/pdf", "text/html" })
+    @Produces({ MediaType.APPLICATION_JSON, "text/csv", "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/pdf", "text/html" })
     @Operation(summary = "Running a Report", description = "This resource allows you to run and receive output from pre-defined Apache Fineract reports.\n"
             + "\n" + "Reports can also be used to provide data for searching and workflow functionality.\n" + "\n"
             + "The default output is a JSON formatted \"Generic Resultset\". The Generic Resultset contains Column Heading as well as Data information. However, you can export to CSV format by simply adding \"&exportCSV=true\" to the end of your URL.\n"

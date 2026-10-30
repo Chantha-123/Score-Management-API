@@ -23,13 +23,8 @@ import java.util.Set;
 
 public enum CommuneJsonInputParams {
 
-    ID("id"),
-    DISTRICT_ID("districtId"),
-    CODE("code"),
-    NAME_KHM("nameKhm"),
-    NAME_ENG("nameEng"),
-    LOCALE("locale"),
-    DATE_FORMAT("dateFormat");
+    ID("id"), DISTRICT_ID("districtId"), CODE("code"), NAME_KHM("nameKhm"), NAME_ENG("nameEng"), LOCALE("locale"), DATE_FORMAT(
+            "dateFormat");
 
     private final String value;
 

@@ -226,7 +226,8 @@ public final class ClientDataValidator {
 
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.villageIdParamName, element)) {
             final Long villageId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.villageIdParamName, element);
-            baseDataValidator.reset().parameter(ClientApiConstants.villageIdParamName).value(villageId).ignoreIfNull().longGreaterThanZero();
+            baseDataValidator.reset().parameter(ClientApiConstants.villageIdParamName).value(villageId).ignoreIfNull()
+                    .longGreaterThanZero();
         }
 
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.birthVillageIdParamName, element)) {
@@ -526,7 +527,8 @@ public final class ClientDataValidator {
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.villageIdParamName, element)) {
             atLeastOneParameterPassedForUpdate = true;
             final Long villageId = this.fromApiJsonHelper.extractLongNamed(ClientApiConstants.villageIdParamName, element);
-            baseDataValidator.reset().parameter(ClientApiConstants.villageIdParamName).value(villageId).ignoreIfNull().longGreaterThanZero();
+            baseDataValidator.reset().parameter(ClientApiConstants.villageIdParamName).value(villageId).ignoreIfNull()
+                    .longGreaterThanZero();
         }
 
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.birthVillageIdParamName, element)) {

@@ -30,6 +30,7 @@ import org.apache.fineract.accounting.producttoaccountmapping.service.ProductToG
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.infrastructure.core.exception.GeneralPlatformDomainRuleException;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.entityaccess.domain.FineractEntityAccessType;
 import org.apache.fineract.infrastructure.entityaccess.service.FineractEntityAccessUtil;
@@ -299,6 +300,10 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
                         if (!loanProductCurrencyCode.equals(charge.getCurrencyCode())) {
                             final String errorMessage = "Charge and Loan Product must have the same currency.";
                             throw new InvalidCurrencyException("charge", "attach.to.loan.product", errorMessage);
+                        }
+                        if (charge.isOnDemand()) {
+                            throw new GeneralPlatformDomainRuleException("error.msg.charge.on.demand.cannot.attach.to.loan.product",
+                                    "On-demand charge cannot be attached to a loan product.", charge.getName());
                         }
                         charges.add(charge);
                     }

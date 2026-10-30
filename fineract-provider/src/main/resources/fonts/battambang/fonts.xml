@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Battambang (SIL Open Font License, see OFL.txt): Khmer + Latin glyphs, embedded in Jasper PDFs -->
+<fontFamilies>
+    <fontFamily name="Battambang">
+        <normal><![CDATA[fonts/battambang/Battambang-Regular.ttf]]></normal>
+        <bold><![CDATA[fonts/battambang/Battambang-Bold.ttf]]></bold>
+        <pdfEncoding><![CDATA[Identity-H]]></pdfEncoding>
+        <pdfEmbedded><![CDATA[true]]></pdfEmbedded>
+    </fontFamily>
+    <!-- English templates: Latin text in DejaVu Sans, any Khmer characters (client or office names) fall back to Battambang -->
+    <fontSet name="DejaVu Sans Khmer">
+        <family familyName="DejaVu Sans" primary="true"/>
+        <family familyName="Battambang">
+            <includedScripts>
+                <script>Khmer</script>
+            </includedScripts>
+        </family>
+    </fontSet>
+</fontFamilies>

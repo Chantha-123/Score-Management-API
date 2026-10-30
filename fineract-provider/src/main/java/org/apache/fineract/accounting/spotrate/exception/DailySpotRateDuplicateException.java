@@ -23,9 +23,7 @@ import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainR
 public class DailySpotRateDuplicateException extends AbstractPlatformDomainRuleException {
 
     public DailySpotRateDuplicateException(final Long officeId, final String currencyCode, final String rateDate) {
-        super("error.msg.dailyspotrate.duplicate",
-                "A Daily Spot Rate for office [" + officeId + "], currency [" + currencyCode + "] and date [" + rateDate
-                        + "] already exists",
-                officeId, currencyCode, rateDate);
+        super("error.msg.dailyspotrate.duplicate", "A Daily Spot Rate for office [" + officeId + "], currency [" + currencyCode
+                + "] and date [" + rateDate + "] already exists", officeId, currencyCode, rateDate);
     }
 }

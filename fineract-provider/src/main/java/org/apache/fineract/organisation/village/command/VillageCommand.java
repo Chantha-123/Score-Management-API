@@ -43,8 +43,7 @@ public class VillageCommand {
 
         baseDataValidator.reset().parameter(VillageJsonInputParams.COMMUNE_ID.getValue()).value(this.communeId).notNull()
                 .longGreaterThanZero();
-        baseDataValidator.reset().parameter(VillageJsonInputParams.CODE.getValue()).value(this.code).notBlank()
-                .notExceedingLengthOf(20);
+        baseDataValidator.reset().parameter(VillageJsonInputParams.CODE.getValue()).value(this.code).notBlank().notExceedingLengthOf(20);
         baseDataValidator.reset().parameter(VillageJsonInputParams.NAME_KHM.getValue()).value(this.nameKhm).notBlank()
                 .notExceedingLengthOf(100);
         baseDataValidator.reset().parameter(VillageJsonInputParams.NAME_ENG.getValue()).value(this.nameEng).notBlank()
@@ -60,12 +59,12 @@ public class VillageCommand {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("Village");
 
-        baseDataValidator.reset().parameter(VillageJsonInputParams.CODE.getValue()).value(this.code).ignoreIfNull()
-                .notBlank().notExceedingLengthOf(20);
-        baseDataValidator.reset().parameter(VillageJsonInputParams.NAME_KHM.getValue()).value(this.nameKhm).ignoreIfNull()
-                .notBlank().notExceedingLengthOf(100);
-        baseDataValidator.reset().parameter(VillageJsonInputParams.NAME_ENG.getValue()).value(this.nameEng).ignoreIfNull()
-                .notBlank().notExceedingLengthOf(100);
+        baseDataValidator.reset().parameter(VillageJsonInputParams.CODE.getValue()).value(this.code).ignoreIfNull().notBlank()
+                .notExceedingLengthOf(20);
+        baseDataValidator.reset().parameter(VillageJsonInputParams.NAME_KHM.getValue()).value(this.nameKhm).ignoreIfNull().notBlank()
+                .notExceedingLengthOf(100);
+        baseDataValidator.reset().parameter(VillageJsonInputParams.NAME_ENG.getValue()).value(this.nameEng).ignoreIfNull().notBlank()
+                .notExceedingLengthOf(100);
 
         baseDataValidator.reset().anyOfNotNull(this.code, this.nameKhm, this.nameEng);
 

@@ -111,6 +111,8 @@ import org.apache.fineract.portfolio.businessevent.domain.loan.charge.LoanDelete
 import org.apache.fineract.portfolio.businessevent.domain.loan.charge.LoanUpdateChargeBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.charge.LoanWaiveChargeBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.charge.LoanWaiveChargeUndoBusinessEvent;
+import org.apache.fineract.portfolio.businessevent.domain.loan.transaction.LoanChargePaymentPostBusinessEvent;
+import org.apache.fineract.portfolio.businessevent.domain.loan.transaction.LoanChargePaymentPreBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.transaction.LoanUndoWrittenOffBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.transaction.LoanWaiveInterestBusinessEvent;
 import org.apache.fineract.portfolio.businessevent.domain.loan.transaction.LoanWrittenOffPostBusinessEvent;
@@ -126,6 +128,7 @@ import org.apache.fineract.portfolio.calendar.exception.CalendarParameterUpdateN
 import org.apache.fineract.portfolio.charge.domain.Charge;
 import org.apache.fineract.portfolio.charge.domain.ChargePaymentMode;
 import org.apache.fineract.portfolio.charge.domain.ChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 import org.apache.fineract.portfolio.charge.exception.ChargeCannotBeUpdatedException;
 import org.apache.fineract.portfolio.charge.exception.LoanChargeCannotBeAddedException;
 import org.apache.fineract.portfolio.charge.exception.LoanChargeCannotBeDeletedException;
@@ -192,10 +195,10 @@ import org.apache.fineract.portfolio.loanaccount.exception.InstallmentNotFoundEx
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidLoanTransactionTypeException;
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidPaidInAdvanceAmountException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanForeclosureException;
-import org.apache.fineract.portfolio.loanaccount.exception.LoanPayoffException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanMultiDisbursementException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerUnassignmentException;
+import org.apache.fineract.portfolio.loanaccount.exception.LoanPayoffException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanTransactionNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementDataNotAllowedException;
 import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
@@ -1154,9 +1157,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     }
 
     /**
-     * Restores the schedule to its exact pre-paydown shape before a BATCH_PRINCIPAL_PAYDOWN transaction is reversed
-     * by the standard {@code loan.adjustExistingTransaction(...)} path below. Without this, that path would zero out
-     * the payment while leaving the reamortized (reduced-principal, re-dated) schedule in place.
+     * Restores the schedule to its exact pre-paydown shape before a BATCH_PRINCIPAL_PAYDOWN transaction is reversed by
+     * the standard {@code loan.adjustExistingTransaction(...)} path below. Without this, that path would zero out the
+     * payment while leaving the reamortized (reduced-principal, re-dated) schedule in place.
      */
     private void undoBatchPrincipalPaydown(final Loan loan, final LoanTransaction transactionToAdjust, final BigDecimal transactionAmount) {
 
@@ -1172,8 +1175,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                         "No batch principal paydown audit record found for transaction", transactionToAdjust.getId()));
 
         final LoanTransaction latestNonReversedTransaction = loan.getLoanTransactions().stream().filter(LoanTransaction::isNotReversed)
-                .max(Comparator.comparing(LoanTransaction::getTransactionDate).thenComparing(LoanTransaction::getId))
-                .orElse(null);
+                .max(Comparator.comparing(LoanTransaction::getTransactionDate).thenComparing(LoanTransaction::getId)).orElse(null);
         if (latestNonReversedTransaction == null || !latestNonReversedTransaction.getId().equals(transactionToAdjust.getId())) {
             throw new PlatformServiceUnavailableException("error.msg.loan.batchprincipalpaydown.undo.not.latest.transaction",
                     "A batch principal paydown can only be undone while it is still the loan's most recent transaction; "
@@ -1600,6 +1602,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         if (chargeDefinition.isOverdueInstallment()) {
             final String defaultUserMessage = "Installment charge cannot be added to the loan.";
             throw new LoanChargeCannotBeAddedException("loanCharge", "overdue.charge", defaultUserMessage, null,
+                    chargeDefinition.getName());
+        } else if (chargeDefinition.isOnDemand()) {
+            final String defaultUserMessage = "On-demand charge can only be applied through the chargeFee transaction.";
+            throw new LoanChargeCannotBeAddedException("loanCharge", "on.demand.charge", defaultUserMessage, null,
                     chargeDefinition.getName());
         } else if (loanCharge.getDueLocalDate() != null
                 && loanCharge.getDueLocalDate().isBefore(loan.getLastUserTransactionForChargeCalc())) {
@@ -3371,6 +3377,177 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final CommandProcessingResultBuilder commandProcessingResultBuilder = new CommandProcessingResultBuilder();
         return commandProcessingResultBuilder.withLoanId(loanId) //
                 .with(changes) //
+                .build();
+    }
+
+    /**
+     * Applies an on-demand charge to an active loan and collects it in the same step, posting a single CHARGE_PAYMENT
+     * transaction (Dr Fund Source / Cr Income from Fees). Percentage charges use the principal outstanding at the time
+     * of the transaction as their base, so the borrower's loan balance is left unchanged.
+     */
+    @Transactional
+    @Override
+    public CommandProcessingResult makeChargeFeeTransaction(final Long loanId, final JsonCommand command) {
+
+        this.loanEventApiJsonValidator.validateChargeFeeTransaction(command.json());
+
+        final Long chargeDefinitionId = command.longValueOfParameterNamed("chargeId");
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
+
+        final Map<String, Object> changes = new LinkedHashMap<>();
+        changes.put("chargeId", chargeDefinitionId);
+        changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
+        changes.put("locale", command.locale());
+        changes.put("dateFormat", command.dateFormat());
+        changes.put("paymentTypeId", command.stringValueOfParameterNamed("paymentTypeId"));
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            changes.put("note", noteText);
+        }
+
+        final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        checkClientOrGroupActive(loan);
+        if (!loan.status().isActive()) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.charge.fee.loan.not.active",
+                    "Fee can only be charged on an active loan.", loanId);
+        }
+
+        final Charge chargeDefinition = this.chargeRepository.findOneWithNotFoundDetection(chargeDefinitionId);
+        if (!chargeDefinition.isOnDemand() || !chargeDefinition.isActive()) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.charge.fee.charge.not.on.demand",
+                    "Charge must be an active on-demand charge.", chargeDefinitionId);
+        }
+        if (!loan.hasCurrencyCodeOf(chargeDefinition.getCurrencyCode())) {
+            final String errorMessage = "Charge and Loan must have the same currency.";
+            throw new InvalidCurrencyException("loanCharge", "attach.to.loan", errorMessage);
+        }
+        if (!transactionDate.isEqual(DateUtils.getBusinessLocalDate())) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.charge.fee.date.must.be.business.date",
+                    "Fee can only be charged on the current business date.", transactionDate);
+        }
+
+        final BigDecimal principalOutstanding = loan.getSummary().getTotalPrincipalOutstanding();
+        if (principalOutstanding == null || principalOutstanding.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.charge.fee.no.principal.outstanding",
+                    "Fee cannot be charged on a loan without principal outstanding.", loanId);
+        }
+
+        final List<Long> existingTransactionIds = new ArrayList<>(loan.findExistingTransactionIds());
+        final List<Long> existingReversedTransactionIds = new ArrayList<>(loan.findExistingReversedTransactionIds());
+
+        // stored as a specified-due-date charge so schedule regeneration and accruals treat it like any other dated
+        // fee; the principal outstanding is frozen as the percentage base
+        final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(chargeDefinition, principalOutstanding, null,
+                ChargeTimeType.SPECIFIED_DUE_DATE, null, transactionDate, ChargePaymentMode.REGULAR, null);
+        businessEventNotifierService.notifyPreBusinessEvent(new LoanAddChargeBusinessEvent(loanCharge));
+        loan.addLoanCharge(loanCharge);
+        this.loanChargeRepository.saveAndFlush(loanCharge);
+
+        // upfront accrual needs the receivable booked before it is cleared by the payment; cash-based products skip
+        // this so only one transaction is recorded
+        if (loan.isUpfrontAccrualAccountingEnabledOnLoanProduct()) {
+            final LoanTransaction applyLoanChargeTransaction = loan.handleChargeAppliedTransaction(loanCharge, transactionDate);
+            this.loanTransactionRepository.saveAndFlush(applyLoanChargeTransaction);
+        }
+
+        final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
+        final LoanTransaction chargePayment = LoanTransaction.loanPayment(null, loan.getOffice(), loanCharge.getAmount(loan.getCurrency()),
+                paymentDetail, transactionDate, txnExternalId, LoanTransactionType.CHARGE_PAYMENT);
+
+        final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(), transactionDate);
+        final WorkingDays workingDays = this.workingDaysRepository.findOne();
+        final HolidayDetailDTO holidayDetailDTO = new HolidayDetailDTO(
+                this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled(), holidays, workingDays,
+                this.configurationDomainService.allowTransactionsOnHolidayEnabled(),
+                this.configurationDomainService.allowTransactionsOnNonWorkingDayEnabled());
+
+        businessEventNotifierService.notifyPreBusinessEvent(new LoanChargePaymentPreBusinessEvent(loan));
+        // makeChargePayment appends the loan's current ids (including the apply-charge accrual above) to the lists it
+        // is given, so hand it scratch lists to keep that accrual eligible for journal posting
+        loan.makeChargePayment(loanCharge.getId(), defaultLoanLifecycleStateMachine(), new ArrayList<>(), new ArrayList<>(),
+                holidayDetailDTO, chargePayment, null);
+        this.loanTransactionRepository.saveAndFlush(chargePayment);
+        saveLoanWithDataIntegrityViolationChecks(loan);
+
+        if (StringUtils.isNotBlank(noteText)) {
+            final Note note = Note.loanTransactionNote(loan, chargePayment, noteText);
+            this.noteRepository.save(note);
+        }
+
+        postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
+        this.loanAccountDomainService.recalculateAccruals(loan);
+
+        businessEventNotifierService.notifyPostBusinessEvent(new LoanAddChargeBusinessEvent(loanCharge));
+        businessEventNotifierService.notifyPostBusinessEvent(new LoanChargePaymentPostBusinessEvent(chargePayment));
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(chargePayment.getId()) //
+                .withOfficeId(loan.getOfficeId()) //
+                .withClientId(loan.getClientId()) //
+                .withGroupId(loan.getGroupId()) //
+                .withLoanId(loanId) //
+                .with(changes) //
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public CommandProcessingResult undoChargeFeeTransaction(final Long loanId, final Long transactionId, final JsonCommand command) {
+
+        final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        checkClientOrGroupActive(loan);
+        if (!loan.status().isActive()) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.charge.fee.loan.not.active",
+                    "Fee can only be reversed on an active loan.", loanId);
+        }
+
+        final LoanTransaction chargePayment = loan.getLoanTransactions().stream().filter(t -> transactionId.equals(t.getId())).findFirst()
+                .orElseThrow(() -> new LoanTransactionNotFoundException(transactionId));
+        LoanCharge loanCharge = null;
+        if (chargePayment.isChargePayment() && chargePayment.isNotReversed()) {
+            loanCharge = chargePayment.getLoanChargesPaid().stream().map(LoanChargePaidBy::getLoanCharge)
+                    .filter(charge -> charge.getCharge().isOnDemand()).findFirst().orElse(null);
+        }
+        if (loanCharge == null) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.charge.fee.undo.not.charge.fee.transaction",
+                    "Transaction is not an active on-demand fee transaction.", transactionId);
+        }
+
+        final boolean hasLaterTransaction = loan.getLoanTransactions().stream()
+                .anyMatch(t -> t.isNotReversed() && !t.isAccrual() && !t.equals(chargePayment)
+                        && (t.getTransactionDate().isAfter(chargePayment.getTransactionDate())
+                                || (t.getTransactionDate().isEqual(chargePayment.getTransactionDate()) && t.getId() > transactionId)));
+        if (hasLaterTransaction) {
+            throw new GeneralPlatformDomainRuleException("error.msg.loan.charge.fee.undo.not.latest.transaction",
+                    "Only the latest transaction on the loan can be reversed.", transactionId);
+        }
+
+        final List<Long> existingTransactionIds = new ArrayList<>(loan.findExistingTransactionIds());
+        final List<Long> existingReversedTransactionIds = new ArrayList<>(loan.findExistingReversedTransactionIds());
+
+        loan.reverseChargeFeeTransaction(chargePayment, loanCharge);
+
+        final ChangedTransactionDetail changedTransactionDetail = loan.reprocessTransactions();
+        if (changedTransactionDetail != null) {
+            for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
+                this.loanTransactionRepository.save(mapEntry.getValue());
+                loan.addLoanTransaction(mapEntry.getValue());
+                this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
+            }
+        }
+        saveLoanWithDataIntegrityViolationChecks(loan);
+
+        postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
+        this.loanAccountDomainService.recalculateAccruals(loan);
+
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(transactionId) //
+                .withOfficeId(loan.getOfficeId()) //
+                .withClientId(loan.getClientId()) //
+                .withGroupId(loan.getGroupId()) //
+                .withLoanId(loanId) //
                 .build();
     }
 

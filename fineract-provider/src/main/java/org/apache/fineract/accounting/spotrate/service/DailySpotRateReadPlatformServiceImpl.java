@@ -44,8 +44,7 @@ public class DailySpotRateReadPlatformServiceImpl implements DailySpotRateReadPl
         public String schema() {
             return " dsr.id as id, dsr.office_id as officeId, o.name as officeName, dsr.currency_code as currencyCode,"
                     + " dsr.rate_date as rateDate, dsr.spot_rate as spotRate, dsr.buying_rate as buyingRate,"
-                    + " dsr.selling_rate as sellingRate"
-                    + " from acc_daily_spot_rate dsr"
+                    + " dsr.selling_rate as sellingRate" + " from acc_daily_spot_rate dsr"
                     + " inner join m_office o on o.id = dsr.office_id";
         }
 

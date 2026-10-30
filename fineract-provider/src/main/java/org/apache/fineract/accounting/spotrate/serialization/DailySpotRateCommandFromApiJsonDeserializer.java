@@ -57,12 +57,12 @@ public final class DailySpotRateCommandFromApiJsonDeserializer extends AbstractF
         final String currencyCode = this.fromApiJsonHelper.extractStringNamed(DailySpotRateJsonInputParams.CURRENCY_CODE.getValue(),
                 element);
         final LocalDate rateDate = this.fromApiJsonHelper.extractLocalDateNamed(DailySpotRateJsonInputParams.RATE_DATE.getValue(), element);
-        final BigDecimal spotRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                DailySpotRateJsonInputParams.SPOT_RATE.getValue(), element);
-        final BigDecimal buyingRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                DailySpotRateJsonInputParams.BUYING_RATE.getValue(), element);
-        final BigDecimal sellingRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
-                DailySpotRateJsonInputParams.SELLING_RATE.getValue(), element);
+        final BigDecimal spotRate = this.fromApiJsonHelper
+                .extractBigDecimalWithLocaleNamed(DailySpotRateJsonInputParams.SPOT_RATE.getValue(), element);
+        final BigDecimal buyingRate = this.fromApiJsonHelper
+                .extractBigDecimalWithLocaleNamed(DailySpotRateJsonInputParams.BUYING_RATE.getValue(), element);
+        final BigDecimal sellingRate = this.fromApiJsonHelper
+                .extractBigDecimalWithLocaleNamed(DailySpotRateJsonInputParams.SELLING_RATE.getValue(), element);
 
         return new DailySpotRateCommand(id, officeId, currencyCode, rateDate, spotRate, buyingRate, sellingRate);
     }

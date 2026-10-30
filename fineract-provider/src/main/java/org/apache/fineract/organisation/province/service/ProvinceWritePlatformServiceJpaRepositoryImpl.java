@@ -86,7 +86,8 @@ public class ProvinceWritePlatformServiceJpaRepositoryImpl implements ProvinceWr
                 this.provinceRepository.saveAndFlush(province);
             }
 
-            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(provinceId).with(changesOnly).build();
+            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(provinceId).with(changesOnly)
+                    .build();
         } catch (final JpaSystemException | DataIntegrityViolationException dve) {
             final Throwable throwable = dve.getMostSpecificCause();
             handleDataIntegrityIssues(throwable, dve);
@@ -96,8 +97,7 @@ public class ProvinceWritePlatformServiceJpaRepositoryImpl implements ProvinceWr
 
     private void handleDataIntegrityIssues(final Throwable realCause, final NonTransientDataAccessException dve) {
         if (realCause.getMessage().contains("uq_province_code")) {
-            throw new PlatformDataIntegrityException("error.msg.province.duplicate.code",
-                    "A Province with this code already exists.");
+            throw new PlatformDataIntegrityException("error.msg.province.duplicate.code", "A Province with this code already exists.");
         }
         LOG.error("Error occurred.", dve);
         throw new PlatformDataIntegrityException("error.msg.province.unknown.data.integrity.issue",

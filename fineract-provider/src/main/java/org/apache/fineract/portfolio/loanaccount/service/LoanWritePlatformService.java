@@ -114,6 +114,10 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult payoffLoan(Long loanId, JsonCommand command);
 
+    CommandProcessingResult makeChargeFeeTransaction(Long loanId, JsonCommand command);
+
+    CommandProcessingResult undoChargeFeeTransaction(Long loanId, Long transactionId, JsonCommand command);
+
     CommandProcessingResult disburseGLIMLoan(Long loanId, JsonCommand command);
 
     CommandProcessingResult undoGLIMLoanDisbursal(Long loanId, JsonCommand command);

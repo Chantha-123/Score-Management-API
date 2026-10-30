@@ -592,7 +592,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                         EntityTables.LOAN.getName(), newLoanApplication.getId(), newLoanApplication.productId(),
                         command.arrayOfParameterNamed(LoanApiConstants.datatables));
             }
-            
 
             loanRepositoryWrapper.flush();
 

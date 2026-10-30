@@ -446,6 +446,9 @@ public final class ChargeDefinitionCommandFromApiJsonDeserializer {
         if (chargeTimeType.equals(ChargeTimeType.TRANCHE_DISBURSEMENT.getValue())) {
             baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
                     .isOneOfTheseValues(ChargeCalculationType.validValuesForTrancheDisbursement());
+        } else if (chargeTimeType.equals(ChargeTimeType.ON_DEMAND.getValue())) {
+            baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
+                    .isOneOfTheseValues(ChargeCalculationType.validValuesForOnDemand());
         } else {
             baseDataValidator.reset().parameter("chargeCalculationType").value(chargeCalculationType)
                     .isNotOneOfTheseValues(ChargeCalculationType.PERCENT_OF_DISBURSEMENT_AMOUNT.getValue());

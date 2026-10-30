@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+
+<!-- Stretchy report "Aging Summary (Arrears in Weeks)(Pentaho)" (report_type = Jasper), converted from the SQL of the Table report "Aging Summary (Arrears in Weeks)".
+     Run with R_officeId, R_currencyId (-1 = All). Arrears are measured against the business date. -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="aging-summary-arrears-in-weeks-pentaho" pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="NoDataSection">
+
+    <!-- Names may be Khmer: lay out Khmer runs with Java's text engine (OpenPDF cannot shape them) -->
+    <property name="net.sf.jasperreports.export.pdf.glyph.renderer.blocks" value="khmer"/>
+    <!-- CSV/XLSX: keep only column headers, detail rows and totals (no repeated titles / page footers) -->
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.title" value="title"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+
+    <!-- Font set from fonts/battambang/fonts.xml: DejaVu Sans, with Battambang for Khmer characters.
+         Battambang lines need about 2x the font size in height, so 8pt rows are 18pt tall. -->
+    <style name="Base" isDefault="true" fontName="DejaVu Sans Khmer" fontSize="8" isBlankWhenNull="true">
+        <box leftPadding="2" rightPadding="2"/>
+    </style>
+    <style name="Label" style="Base" forecolor="#555555"/>
+    <style name="Value" style="Base" isBold="true"/>
+    <style name="ColumnHeader" style="Base" isBold="true" mode="Opaque" backcolor="#E6E6E6" vTextAlign="Middle"/>
+    <style name="Amount" style="Base" hTextAlign="Right" pattern="#,##0.00"/>
+    <style name="Total" style="Amount" isBold="true"/>
+    <style name="Count" style="Base" hTextAlign="Right" pattern="#,##0"/>
+    <style name="TotalCount" style="Count" isBold="true"/>
+
+    <!-- Supplied by the service on every run -->
+    <parameter name="currentDate" class="java.util.Date"/>
+    <parameter name="currentDateTime" class="java.util.Date"/>
+    <parameter name="currentUserHierarchy" class="java.lang.String"/>
+    <parameter name="currentUserName" class="java.lang.String"/>
+    <!-- Stretchy parameter variables; defaults apply when the R_ value is missing or blank -->
+    <parameter name="officeId" class="java.lang.Long">
+        <!-- OfficeIdSelectOne has no "All": default to the head office (root of the hierarchy) -->
+        <defaultValueExpression><![CDATA[1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="currencyId" class="java.lang.String">
+        <defaultValueExpression><![CDATA["-1"]]></defaultValueExpression>
+    </parameter>
+    <!-- Not prompted: business date minus N days. A date d is less than N days in arrears when d > daysAgoN
+         (replaces DATEDIFF(CURDATE(), d) < N, which does not port to PostgreSQL) -->
+    <parameter name="daysAgo1" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(1))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo8" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(8))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo15" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(15))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo22" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(22))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo29" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(29))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo36" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(36))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo43" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(43))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo50" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(50))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo57" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(57))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo64" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(64))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo71" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(71))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo78" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(78))]]></defaultValueExpression>
+    </parameter>
+    <parameter name="daysAgo85" class="java.util.Date" isForPrompting="false">
+        <defaultValueExpression><![CDATA[java.sql.Date.valueOf(new java.sql.Date($P{currentDate}.getTime()).toLocalDate().minusDays(85))]]></defaultValueExpression>
+    </parameter>
+
+    <queryString>
+        <![CDATA[
+SELECT (SELECT so.name FROM m_office so WHERE so.id = $P{officeId}) AS selected_office_name,
+       periods.currency_code,
+       COALESCE(periods.currency_name, periods.currency_code) AS currency_name,
+       periods.period_no AS arrears_period,
+       periods.pid AS period_order,
+       COALESCE(ars.loan_count, 0) AS loan_count,
+       COALESCE(ars.principal, 0) AS original_principal,
+       COALESCE(ars.interest, 0) AS original_interest,
+       COALESCE(ars.prin_paid, 0) AS principal_paid,
+       COALESCE(ars.int_paid, 0) AS interest_paid,
+       COALESCE(ars.prin_overdue, 0) AS principal_overdue,
+       COALESCE(ars.int_overdue, 0) AS interest_overdue
+FROM (SELECT curs.code AS currency_code, curs.name AS currency_name, pers.period_no, pers.pid
+      -- every aging period for every currency in use, so each line is shown even without loans
+      FROM (SELECT 'On Schedule' AS period_no, 1 AS pid
+      UNION ALL SELECT '1', 2
+      UNION ALL SELECT '2', 3
+      UNION ALL SELECT '3', 4
+      UNION ALL SELECT '4', 5
+      UNION ALL SELECT '5', 6
+      UNION ALL SELECT '6', 7
+      UNION ALL SELECT '7', 8
+      UNION ALL SELECT '8', 9
+      UNION ALL SELECT '9', 10
+      UNION ALL SELECT '10', 11
+      UNION ALL SELECT '11', 12
+      UNION ALL SELECT '12', 13
+      UNION ALL SELECT '12+', 14) pers
+      CROSS JOIN (SELECT DISTINCT moc.code, moc.name
+                  FROM m_office mo2
+                  JOIN m_office ounder2 ON ounder2.hierarchy LIKE CONCAT(mo2.hierarchy, '%')
+                                       AND ounder2.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+                  JOIN m_client mc2 ON mc2.office_id = ounder2.id
+                  JOIN m_loan ml2 ON ml2.client_id = mc2.id
+                  JOIN m_organisation_currency moc ON moc.code = ml2.currency_code
+                  WHERE ml2.loan_status_id = 300
+                    AND mo2.id = $P{officeId}
+                    AND ($P{currencyId} = '-1' OR ml2.currency_code = $P{currencyId})) curs) periods
+LEFT JOIN (SELECT z.currency_code, z.arrears_period,
+                  COUNT(z.loan_id) AS loan_count, SUM(z.principal) AS principal, SUM(z.interest) AS interest,
+                  SUM(z.prin_paid) AS prin_paid, SUM(z.int_paid) AS int_paid,
+                  SUM(z.prin_overdue) AS prin_overdue, SUM(z.int_overdue) AS int_overdue
+           FROM (SELECT ml.id AS loan_id, ml.currency_code,
+                        ml.principal_disbursed_derived AS principal,
+                        ml.interest_charged_derived AS interest,
+                        ml.principal_repaid_derived AS prin_paid,
+                        ml.interest_repaid_derived AS int_paid,
+                        laa.principal_overdue_derived AS prin_overdue,
+                        laa.interest_overdue_derived AS int_overdue,
+                        -- no arrears row means not overdue (overdue since the business date)
+                        CASE WHEN laa.overdue_since_date_derived IS NULL THEN 'On Schedule'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo1} THEN 'On Schedule'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo8} THEN '1'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo15} THEN '2'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo22} THEN '3'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo29} THEN '4'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo36} THEN '5'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo43} THEN '6'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo50} THEN '7'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo57} THEN '8'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo64} THEN '9'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo71} THEN '10'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo78} THEN '11'
+                             WHEN laa.overdue_since_date_derived > $P{daysAgo85} THEN '12'
+                             ELSE '12+' END AS arrears_period
+                 FROM m_office mo
+                 JOIN m_office ounder ON ounder.hierarchy LIKE CONCAT(mo.hierarchy, '%')
+                                     AND ounder.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+                 JOIN m_client mc ON mc.office_id = ounder.id
+                 JOIN m_loan ml ON ml.client_id = mc.id
+                 LEFT JOIN m_loan_arrears_aging laa ON laa.loan_id = ml.id
+                 WHERE ml.loan_status_id = 300
+                   AND mo.id = $P{officeId}
+                   AND ($P{currencyId} = '-1' OR ml.currency_code = $P{currencyId})) z
+           GROUP BY z.currency_code, z.arrears_period) ars
+       ON ars.arrears_period = periods.period_no AND ars.currency_code = periods.currency_code
+ORDER BY periods.currency_code, periods.pid
+        ]]>
+    </queryString>
+
+    <!-- Field names = SQL aliases, lowercase snake_case (PostgreSQL folds unquoted aliases to lowercase) -->
+    <field name="selected_office_name" class="java.lang.String"/>
+    <field name="currency_code" class="java.lang.String"/>
+    <field name="currency_name" class="java.lang.String"/>
+    <field name="period_order" class="java.lang.Integer"/>
+    <field name="arrears_period" class="java.lang.String"/>
+    <field name="loan_count" class="java.lang.Long"/>
+    <field name="original_principal" class="java.math.BigDecimal"/>
+    <field name="original_interest" class="java.math.BigDecimal"/>
+    <field name="principal_paid" class="java.math.BigDecimal"/>
+    <field name="interest_paid" class="java.math.BigDecimal"/>
+    <field name="principal_overdue" class="java.math.BigDecimal"/>
+    <field name="interest_overdue" class="java.math.BigDecimal"/>
+
+    <variable name="groupLoanCount" class="java.lang.Long" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{loan_count}]]></variableExpression>
+    </variable>
+    <variable name="groupOriginalPrincipal" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{original_principal}]]></variableExpression>
+    </variable>
+    <variable name="groupOriginalInterest" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{original_interest}]]></variableExpression>
+    </variable>
+    <variable name="groupPrincipalPaid" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{principal_paid}]]></variableExpression>
+    </variable>
+    <variable name="groupInterestPaid" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{interest_paid}]]></variableExpression>
+    </variable>
+    <variable name="groupPrincipalOverdue" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{principal_overdue}]]></variableExpression>
+    </variable>
+    <variable name="groupInterestOverdue" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{interest_overdue}]]></variableExpression>
+    </variable>
+
+    <group name="currencyGroup">
+        <groupExpression><![CDATA[$F{currency_code}]]></groupExpression>
+        <groupHeader>
+            <band height="22">
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="555" height="18"/>
+                    <textFieldExpression><![CDATA["Currency: " + $F{currency_name}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+        <groupFooter>
+        <band height="22">
+                <line>
+                    <reportElement x="0" y="1" width="555" height="1"/>
+                    <graphicElement><pen lineWidth="0.5"/></graphicElement>
+                </line>
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="75" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA["Total " + $F{currency_code}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="TotalCount" positionType="Float" x="75" y="2" width="50" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupLoanCount}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="125" y="2" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupOriginalPrincipal}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="197" y="2" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupOriginalInterest}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="269" y="2" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPrincipalPaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="341" y="2" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupInterestPaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="413" y="2" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPrincipalOverdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="485" y="2" width="70" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupInterestOverdue}]]></textFieldExpression>
+                </textField>
+        </band>
+        </groupFooter>
+    </group>
+
+    <title>
+        <band height="70">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="24"/>
+                <textElement textAlignment="Center"><font size="13" isBold="true"/></textElement>
+                <text><![CDATA[Aging Summary (Arrears in Weeks)]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Label" x="0" y="26" width="80" height="18"/>
+                <text><![CDATA[Office]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="80" y="26" width="187" height="18"/>
+                <textFieldExpression><![CDATA[$F{selected_office_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="277" y="26" width="80" height="18"/>
+                <text><![CDATA[Currency]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="357" y="26" width="187" height="18"/>
+                <textFieldExpression><![CDATA["-1".equals($P{currencyId}) ? "All" : $P{currencyId}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="46" width="80" height="18"/>
+                <text><![CDATA[As of]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="80" y="46" width="187" height="18"/>
+                <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMM yyyy", $P{REPORT_LOCALE}).format($P{currentDate})]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="24">
+            <staticText>
+                <reportElement style="ColumnHeader" x="0" y="0" width="75" height="24"/>
+                <text><![CDATA[Weeks in Arrears (Up To)]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="75" y="0" width="50" height="24"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[No. of Loans]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="125" y="0" width="72" height="24"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Original Principal]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="197" y="0" width="72" height="24"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Original Interest]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="269" y="0" width="72" height="24"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Principal Paid]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="341" y="0" width="72" height="24"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Interest Paid]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="413" y="0" width="72" height="24"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Principal Overdue]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="485" y="0" width="70" height="24"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Interest Overdue]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="18">
+                <textField>
+                    <reportElement x="0" y="0" width="75" height="18"/>
+                    <textFieldExpression><![CDATA[$F{arrears_period}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Count" x="75" y="0" width="50" height="18"/>
+                    <textFieldExpression><![CDATA[$F{loan_count}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="125" y="0" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$F{original_principal}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="197" y="0" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$F{original_interest}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="269" y="0" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$F{principal_paid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="341" y="0" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$F{interest_paid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="413" y="0" width="72" height="18"/>
+                    <textFieldExpression><![CDATA[$F{principal_overdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="485" y="0" width="70" height="18"/>
+                    <textFieldExpression><![CDATA[$F{interest_overdue}]]></textFieldExpression>
+                </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <textField>
+                <reportElement style="Label" x="0" y="2" width="300" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Printed by " + $P{currentUserName}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd MMM yyyy HH:mm">
+                <reportElement style="Label" x="177" y="2" width="200" height="14"/>
+                <textElement textAlignment="Center"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[$P{currentDateTime}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Label" x="355" y="2" width="170" height="14"/>
+                <textElement textAlignment="Right"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Label" x="525" y="2" width="30" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <noData>
+        <band height="40">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="40"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="11"/></textElement>
+                <text><![CDATA[No active loans for the selected office and currency.]]></text>
+            </staticText>
+        </band>
+    </noData>
+</jasperReport>

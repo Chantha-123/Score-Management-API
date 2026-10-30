@@ -242,7 +242,8 @@ public class LoanTransactionsApiResource {
             + "loans/1/transactions?command=undowriteoff" + " | Undo Loan Write-off | \n" + "loans/1/transactions?command=recoverypayment"
             + " | Make Recovery Payment | \n" + "loans/1/transactions?command=refundByCash"
             + " | Make a Refund of an Active Loan by Cash | \n" + "loans/1/transactions?command=foreclosure"
-            + " | Foreclosure of an Active Loan | \n" + "loans/1/transactions?command=creditBalanceRefund" + " | Credit Balance Refund"
+            + " | Foreclosure of an Active Loan | \n" + "loans/1/transactions?command=chargeFee"
+            + " | Apply and Collect an On-Demand Fee | \n" + "loans/1/transactions?command=creditBalanceRefund" + " | Credit Balance Refund"
             + " |  \n")
     @RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoanTransactionsApiResourceSwagger.PostLoansLoanIdTransactionsRequest.class)))
     @ApiResponses({
@@ -293,6 +294,9 @@ public class LoanTransactionsApiResource {
         } else if (is(commandParam, "payoff")) {
             final CommandWrapper commandRequest = builder.loanPayoff(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (is(commandParam, "chargeFee")) {
+            final CommandWrapper commandRequest = builder.loanChargeFeeTransaction(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "creditBalanceRefund")) {
             final CommandWrapper commandRequest = builder.creditBalanceRefund(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
@@ -319,10 +323,16 @@ public class LoanTransactionsApiResource {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = LoanTransactionsApiResourceSwagger.PostLoansLoanIdTransactionsTransactionIdResponse.class))) })
     public String adjustLoanTransaction(@PathParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @PathParam("transactionId") @Parameter(description = "transactionId") final Long transactionId,
+            @QueryParam("command") @Parameter(description = "command") final String commandParam,
             @Parameter(hidden = true) final String apiRequestBodyAsJson) {
 
         final CommandWrapperBuilder builder = new CommandWrapperBuilder().withJson(apiRequestBodyAsJson);
-        final CommandWrapper commandRequest = builder.adjustTransaction(loanId, transactionId).build();
+        final CommandWrapper commandRequest;
+        if (is(commandParam, "undoChargeFee")) {
+            commandRequest = builder.undoLoanChargeFeeTransaction(loanId, transactionId).build();
+        } else {
+            commandRequest = builder.adjustTransaction(loanId, transactionId).build();
+        }
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 

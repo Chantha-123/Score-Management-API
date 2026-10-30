@@ -34,7 +34,6 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanChargePaidBy;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanInstallmentCharge;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
-// import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleProcessingWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionToRepaymentScheduleMapping;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
@@ -80,8 +79,8 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
 
         // re-process loan charges over repayment periods (picking up on waived
         // loan charges)
-//        final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
-//        wrapper.reprocess(currency, disbursementDate, installments, charges);
+        // final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
+        // wrapper.reprocess(currency, disbursementDate, installments, charges);
 
         final ChangedTransactionDetail changedTransactionDetail = new ChangedTransactionDetail();
         final List<LoanTransaction> transactionstoBeProcessed = new ArrayList<>();

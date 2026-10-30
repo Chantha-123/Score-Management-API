@@ -93,7 +93,8 @@ public class DistrictWritePlatformServiceJpaRepositoryImpl implements DistrictWr
                 this.districtRepository.saveAndFlush(district);
             }
 
-            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(districtId).with(changesOnly).build();
+            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(districtId).with(changesOnly)
+                    .build();
         } catch (final JpaSystemException | DataIntegrityViolationException dve) {
             final Throwable throwable = dve.getMostSpecificCause();
             handleDataIntegrityIssues(throwable, dve);

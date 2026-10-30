@@ -23,7 +23,7 @@ import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainR
 public class VillageDuplicateException extends AbstractPlatformDomainRuleException {
 
     public VillageDuplicateException(final Long communeId, final String code) {
-        super("error.msg.village.duplicate", "A Village with code [" + code + "] already exists in commune [" + communeId + "]",
-                communeId, code);
+        super("error.msg.village.duplicate", "A Village with code [" + code + "] already exists in commune [" + communeId + "]", communeId,
+                code);
     }
 }

@@ -636,9 +636,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " l.penalty_charges_waived_derived as penaltyChargesWaived,"
                     + " l.penalty_charges_writtenoff_derived as penaltyChargesWrittenOff,"
                     + " l.penalty_charges_outstanding_derived as penaltyChargesOutstanding,"
-                    
+
                     + " l.simi_principal_grace as smiprincipalgrace,"
-                    
+
                     + " l.total_expected_repayment_derived as totalExpectedRepayment," + " l.total_repayment_derived as totalRepayment,"
                     + " l.total_expected_costofloan_derived as totalExpectedCostOfLoan," + " l.total_costofloan_derived as totalCostOfLoan,"
                     + " l.total_waived_derived as totalWaived," + " l.total_writtenoff_derived as totalWrittenOff,"
@@ -783,7 +783,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final Boolean isvariableInstallmentsAllowed = rs.getBoolean("isvariableInstallmentsAllowed");
             final Integer minimumGap = rs.getInt("minimuminstallmentgap");
             final Integer maximumGap = rs.getInt("maximuminstallmentgap");
-            
+
             final Integer simiprincipalGrace = rs.getInt("smiprincipalgrace");
 
             final LoanApplicationTimelineData timeline = new LoanApplicationTimelineData(submittedOnDate, submittedByUsername,
@@ -857,9 +857,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     "feeChargesDueAtDisbursementCharged");
             LoanSummaryData loanSummary = null;
             Boolean inArrears = false;
-        
+
             final Integer smiprincipalgrace = JdbcSupport.getInteger(rs, "smiprincipalgrace");
-            
+
             if (status.id().intValue() >= 300) {
 
                 // loan summary
@@ -998,25 +998,25 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final String closureLoanAccountNo = rs.getString("closureLoanAccountNo");
             final BigDecimal topupAmount = rs.getBigDecimal("topupAmount");
 
-             LoanAccountData loanAcccountData  = LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName,
-                    clientOfficeId, groupData, loanType, loanProductId, loanProductName, loanProductDescription,
-                    isLoanProductLinkedToFloatingRate, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
-                    currencyData, proposedPrincipal, principal, approvedPrincipal, netDisbursalAmount, totalOverpaid, inArrearsTolerance,
-                    termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentFrequencyType, null, null,
-                    transactionStrategyId, transactionStrategyName, amortizationType, interestRatePerPeriod, interestRateFrequencyType,
-                    annualInterestRate, interestType, isFloatingInterestRate, interestRateDifferential, interestCalculationPeriodType,
-                    allowPartialPeriodInterestCalcualtion, expectedFirstRepaymentOnDate, graceOnPrincipalPayment,
-                    recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate,
-                    timeline, loanSummary, feeChargesDueAtDisbursementCharged, syncDisbursementWithMeeting, loanCounter, loanProductCounter,
-                    multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount, outstandingLoanBalance, inArrears, graceOnArrearsAgeing,
-                    isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, interestRecalculationData,
-                    createStandingInstructionAtDisbursement, isvariableInstallmentsAllowed, minimumGap, maximumGap, loanSubStatus,
-                    canUseForTopup, isTopup, closureLoanId, closureLoanAccountNo, topupAmount, isEqualAmortization,
-                    fixedPrincipalPercentagePerInstallment);
-             
-             loanAcccountData.setSimiprincipalGrace(simiprincipalGrace);
-             
-             return loanAcccountData;
+            LoanAccountData loanAcccountData = LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId,
+                    clientAccountNo, clientName, clientOfficeId, groupData, loanType, loanProductId, loanProductName,
+                    loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName, loanPurposeId, loanPurposeName,
+                    loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal, approvedPrincipal, netDisbursalAmount,
+                    totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery,
+                    repaymentFrequencyType, null, null, transactionStrategyId, transactionStrategyName, amortizationType,
+                    interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType, isFloatingInterestRate,
+                    interestRateDifferential, interestCalculationPeriodType, allowPartialPeriodInterestCalcualtion,
+                    expectedFirstRepaymentOnDate, graceOnPrincipalPayment, recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment,
+                    graceOnInterestCharged, interestChargedFromDate, timeline, loanSummary, feeChargesDueAtDisbursementCharged,
+                    syncDisbursementWithMeeting, loanCounter, loanProductCounter, multiDisburseLoan, canDefineInstallmentAmount,
+                    fixedEmiAmount, outstandingLoanBalance, inArrears, graceOnArrearsAgeing, isNPA, daysInMonthType, daysInYearType,
+                    isInterestRecalculationEnabled, interestRecalculationData, createStandingInstructionAtDisbursement,
+                    isvariableInstallmentsAllowed, minimumGap, maximumGap, loanSubStatus, canUseForTopup, isTopup, closureLoanId,
+                    closureLoanAccountNo, topupAmount, isEqualAmortization, fixedPrincipalPercentagePerInstallment);
+
+            loanAcccountData.setSimiprincipalGrace(simiprincipalGrace);
+
+            return loanAcccountData;
         }
     }
 

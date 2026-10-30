@@ -40,8 +40,7 @@ public class VillageReadPlatformServiceImpl implements VillageReadPlatformServic
 
         public String schema() {
             return " v.id as id, v.commune_id as communeId, c.name_eng as communeNameEng,"
-                    + " v.code as code, v.name_khm as nameKhm, v.name_eng as nameEng"
-                    + " from m_village v"
+                    + " v.code as code, v.name_khm as nameKhm, v.name_eng as nameEng" + " from m_village v"
                     + " inner join m_commune c on c.id = v.commune_id";
         }
 

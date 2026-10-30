@@ -23,13 +23,8 @@ import java.util.Set;
 
 public enum DistrictJsonInputParams {
 
-    ID("id"),
-    PROVINCE_ID("provinceId"),
-    CODE("code"),
-    NAME_KHM("nameKhm"),
-    NAME_ENG("nameEng"),
-    LOCALE("locale"),
-    DATE_FORMAT("dateFormat");
+    ID("id"), PROVINCE_ID("provinceId"), CODE("code"), NAME_KHM("nameKhm"), NAME_ENG("nameEng"), LOCALE("locale"), DATE_FORMAT(
+            "dateFormat");
 
     private final String value;
 

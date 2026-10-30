@@ -1,5 +1,5 @@
 #!/bin/sh
-# Starts the test stack on a Linux/macOS laptop.  Usage: ./start.sh [up|down|ps|logs|load]
+# Starts the test stack on a Linux/macOS laptop.  Usage: ./start.sh [up|down|ps|logs|pull|load]
 set -eu
 cd "$(dirname "$0")"
 action="${1:-up}"
@@ -12,13 +12,30 @@ if [ ! -f .env ]; then
 fi
 envval() { v=$(grep "^$1=" .env | head -n1 | cut -d= -f2-); echo "${v:-$2}"; }
 
-if [ -f images/score-images.tar ] && { [ "$action" = load ] || { [ "$action" = up ] && ! docker image inspect "$(envval API_IMAGE mini-pawnshop-api):$(envval IMAGE_TAG local)" >/dev/null 2>&1; }; }; then
+repo=$(envval IMAGE_REPO pichoudam/mini_pawnshop_v1); tag=$(envval IMAGE_TAG "")
+[ -n "$tag" ] || { echo "Set IMAGE_TAG in .env to the pushed version (e.g. IMAGE_TAG=1.0.0)." >&2; exit 1; }
+missing_images() {
+  for svc in db api frontend; do
+    docker image inspect "$repo:$svc-$tag" >/dev/null 2>&1 || printf ' %s' "$repo:$svc-$tag"
+  done
+}
+
+# Offline laptops: images/score-images.tar (build-images.ps1 -Export) instead of Docker Hub.
+if [ "$action" = load ] || { [ "$action" = up ] && [ -f images/score-images.tar ] && [ -n "$(missing_images)" ]; }; then
   echo "Loading images from images/score-images.tar ..."
   docker load -i images/score-images.tar
 fi
 
+if [ "$action" = pull ] || { [ "$action" = up ] && [ -n "$(missing_images)" ]; }; then
+  echo "Pulling $repo:*-$tag from Docker Hub ..."
+  docker compose pull
+fi
+
 case "$action" in
-  load) exit 0 ;;
+  load|pull)
+    missing=$(missing_images)
+    [ -z "$missing" ] || { echo "Image(s) not found:$missing" >&2; exit 1; }
+    echo "All images present."; exit 0 ;;
   down) exec docker compose down ;;
   ps)   exec docker compose ps ;;
   logs) exec docker compose logs -f --tail 100 ;;

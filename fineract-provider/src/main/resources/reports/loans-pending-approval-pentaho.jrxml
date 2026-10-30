@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<!-- Stretchy report "Loans Pending Approval(Pentaho)" (report_type = Jasper).
+     Run with R_officeId, R_loanOfficerId, R_currencyId, R_loanProductId, R_loanPurposeId
+     (-1 = All; -10 = blank loan officer / purpose). Days pending are counted up to the business date. -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="loans-pending-approval-pentaho" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="NoDataSection">
+
+    <property name="net.sf.jasperreports.export.pdf.glyph.renderer.blocks" value="khmer"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.title" value="title"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+
+    <!-- DejaVu Sans with Battambang for Khmer; rows are at least 2x the font size -->
+    <style name="Base" isDefault="true" fontName="DejaVu Sans Khmer" fontSize="7"/>
+    <style name="Label" style="Base" forecolor="#555555"/>
+    <style name="Value" style="Base" isBold="true"/>
+    <style name="ColumnHeader" style="Base" isBold="true" mode="Opaque" backcolor="#E6E6E6" vTextAlign="Middle"/>
+    <style name="Amount" style="Base" hTextAlign="Right" pattern="#,##0.00"/>
+    <style name="Total" style="Amount" isBold="true"/>
+
+    <!-- Supplied by the service on every run -->
+    <parameter name="currentDate" class="java.util.Date"/>
+    <parameter name="currentDateTime" class="java.util.Date"/>
+    <parameter name="currentUserHierarchy" class="java.lang.String"/>
+    <parameter name="currentUserName" class="java.lang.String"/>
+    <!-- Stretchy parameter variables; defaults apply when the R_ value is missing or blank -->
+    <parameter name="officeId" class="java.lang.Long">
+        <!-- OfficeIdSelectOne has no "All": default to the head office (root of the hierarchy) -->
+        <defaultValueExpression><![CDATA[1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="loanOfficerId" class="java.lang.Long">
+        <defaultValueExpression><![CDATA[-1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="currencyId" class="java.lang.String">
+        <defaultValueExpression><![CDATA["-1"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="loanProductId" class="java.lang.Long">
+        <defaultValueExpression><![CDATA[-1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="loanPurposeId" class="java.lang.Long">
+        <defaultValueExpression><![CDATA[-1L]]></defaultValueExpression>
+    </parameter>
+
+    <queryString>
+        <![CDATA[
+SELECT o.name AS selected_office_name,
+       (SELECT s.display_name FROM m_staff s WHERE s.id = $P{loanOfficerId}) AS filter_loan_officer,
+       (SELECT p.name FROM m_product_loan p WHERE p.id = $P{loanProductId}) AS filter_product,
+       (SELECT cv.code_value FROM m_code_value cv WHERE cv.id = $P{loanPurposeId}) AS filter_loan_purpose,
+       ounder.id AS office_id,
+       CONCAT(REPEAT('..', LENGTH(ounder.hierarchy) - LENGTH(REPLACE(ounder.hierarchy, '.', '')) - 1), ounder.name) AS office_name,
+       c.account_no AS client_account_no,
+       c.display_name AS client_name,
+       l.currency_code,
+       COALESCE(cur.display_symbol, l.currency_code) AS currency,
+       pl.name AS product_name,
+       l.account_no AS loan_account_no,
+       l.principal_amount AS loan_amount,
+       l.term_frequency,
+       tf.enum_message_property AS term_frequency_period,
+       l.annual_nominal_interest_rate AS annual_interest_rate,
+       l.submittedon_date AS submitted_on,
+       purp.code_value AS loan_purpose,
+       lo.display_name AS loan_officer_name
+FROM m_office o
+JOIN m_office ounder ON ounder.hierarchy LIKE CONCAT(o.hierarchy, '%')
+                    AND ounder.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+JOIN m_client c ON c.office_id = ounder.id
+JOIN m_loan l ON l.client_id = c.id
+JOIN m_product_loan pl ON pl.id = l.product_id
+LEFT JOIN m_staff lo ON lo.id = l.loan_officer_id
+LEFT JOIN m_currency cur ON cur.code = l.currency_code
+LEFT JOIN m_code_value purp ON purp.id = l.loanpurpose_cv_id
+LEFT JOIN r_enum_value tf ON tf.enum_name = 'term_period_frequency_enum' AND tf.enum_id = l.term_period_frequency_enum
+WHERE o.id = $P{officeId}
+  AND ($P{currencyId} = '-1' OR l.currency_code = $P{currencyId})
+  AND ($P{loanProductId} = -1 OR l.product_id = $P{loanProductId})
+  AND ($P{loanOfficerId} = -1 OR COALESCE(l.loan_officer_id, -10) = $P{loanOfficerId})
+  AND ($P{loanPurposeId} = -1 OR COALESCE(l.loanpurpose_cv_id, -10) = $P{loanPurposeId})
+  AND l.loan_status_id = 100
+ORDER BY ounder.hierarchy, l.currency_code, l.submittedon_date, l.account_no
+        ]]>
+    </queryString>
+
+    <field name="selected_office_name" class="java.lang.String"/>
+    <field name="filter_loan_officer" class="java.lang.String"/>
+    <field name="filter_product" class="java.lang.String"/>
+    <field name="filter_loan_purpose" class="java.lang.String"/>
+    <field name="office_id" class="java.lang.Long"/>
+    <field name="office_name" class="java.lang.String"/>
+    <field name="client_account_no" class="java.lang.String"/>
+    <field name="client_name" class="java.lang.String"/>
+    <field name="currency_code" class="java.lang.String"/>
+    <field name="currency" class="java.lang.String"/>
+    <field name="product_name" class="java.lang.String"/>
+    <field name="loan_account_no" class="java.lang.String"/>
+    <field name="loan_amount" class="java.math.BigDecimal"/>
+    <field name="term_frequency" class="java.lang.Integer"/>
+    <field name="term_frequency_period" class="java.lang.String"/>
+    <field name="annual_interest_rate" class="java.math.BigDecimal"/>
+    <field name="submitted_on" class="java.util.Date"/>
+    <field name="loan_purpose" class="java.lang.String"/>
+    <field name="loan_officer_name" class="java.lang.String"/>
+
+    <variable name="grandLoanAmount" class="java.math.BigDecimal" calculation="Sum">
+        <variableExpression><![CDATA[$F{loan_amount}]]></variableExpression>
+    </variable>
+    <variable name="officeLoanAmount" class="java.math.BigDecimal" resetType="Group" resetGroup="office" calculation="Sum">
+        <variableExpression><![CDATA[$F{loan_amount}]]></variableExpression>
+    </variable>
+
+    <!-- Amounts in different currencies are never added together: group by office AND currency -->
+    <group name="office">
+        <groupExpression><![CDATA[$F{office_id} + "|" + $F{currency_code}]]></groupExpression>
+        <groupHeader>
+            <band height="20">
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="802" height="18"/>
+                    <textFieldExpression><![CDATA[$F{office_name} + "  (" + $F{currency} + ")"]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+        <groupFooter>
+            <band height="22">
+                <line>
+                    <reportElement x="360" y="1" width="75" height="1"/>
+                    <graphicElement><pen lineWidth="0.5"/></graphicElement>
+                </line>
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="360" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA["Subtotal " + $F{office_name}.replaceFirst("^(\\.\\.)+", "") + " (" + $F{currency} + "), " + $V{office_COUNT} + " loans"]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" x="360" y="2" width="75" height="18"/>
+                    <textFieldExpression><![CDATA[$V{officeLoanAmount}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupFooter>
+    </group>
+
+    <title>
+        <band height="90">
+            <staticText>
+                <reportElement x="0" y="0" width="802" height="24"/>
+                <textElement textAlignment="Center"><font size="13" isBold="true"/></textElement>
+                <text><![CDATA[Loans Pending Approval]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Label" x="0" y="26" width="70" height="18"/>
+                <text><![CDATA[Office]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="70" y="26" width="330" height="18"/>
+                <textFieldExpression><![CDATA[$F{selected_office_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="46" width="70" height="18"/>
+                <text><![CDATA[As of]]></text>
+            </staticText>
+            <textField pattern="dd MMM yyyy">
+                <reportElement style="Value" x="70" y="46" width="330" height="18"/>
+                <textFieldExpression><![CDATA[$P{currentDate}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="420" y="26" width="80" height="18"/>
+                <text><![CDATA[Currency]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="500" y="26" width="302" height="18"/>
+                <textFieldExpression><![CDATA["-1".equals($P{currencyId}) ? "All" : $P{currencyId}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="420" y="46" width="80" height="18"/>
+                <text><![CDATA[Loan Officer]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Value" x="500" y="46" width="302" height="18"/>
+                <textFieldExpression><![CDATA[$P{loanOfficerId} == -1L ? "All" : $P{loanOfficerId} == -10L ? "(No loan officer)" : $F{filter_loan_officer}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="66" width="70" height="18"/>
+                <text><![CDATA[Filters]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="70" y="66" width="732" height="18"/>
+                <textFieldExpression><![CDATA["Product: " + ($P{loanProductId} == -1L ? "All" : $F{filter_product})
+    + "     Loan Purpose: " + ($P{loanPurposeId} == -1L ? "All" : $P{loanPurposeId} == -10L ? "(No purpose)" : $F{filter_loan_purpose})]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="20">
+            <staticText>
+                <reportElement style="ColumnHeader" x="0" y="0" width="65" height="20"/>
+                <text><![CDATA[Client Account]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="65" y="0" width="130" height="20"/>
+                <text><![CDATA[Client]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="195" y="0" width="65" height="20"/>
+                <text><![CDATA[Loan Account]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="260" y="0" width="100" height="20"/>
+                <text><![CDATA[Product]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="360" y="0" width="75" height="20"/>
+                <textElement textAlignment="Right"/>
+                <text><![CDATA[Loan Amount]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="435" y="0" width="60" height="20"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Term]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="495" y="0" width="40" height="20"/>
+                <textElement textAlignment="Right"/>
+                <text><![CDATA[Rate %]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="535" y="0" width="55" height="20"/>
+                <text><![CDATA[Submitted]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="590" y="0" width="45" height="20"/>
+                <textElement textAlignment="Right"/>
+                <text><![CDATA[Days Pending]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="635" y="0" width="80" height="20"/>
+                <text><![CDATA[Loan Purpose]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="715" y="0" width="87" height="20"/>
+                <text><![CDATA[Loan Officer]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="18">
+            <textField>
+                <reportElement x="0" y="0" width="65" height="18"/>
+                <textFieldExpression><![CDATA[$F{client_account_no}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="65" y="0" width="130" height="18"/>
+                <textFieldExpression><![CDATA[$F{client_name}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="195" y="0" width="65" height="18"/>
+                <textFieldExpression><![CDATA[$F{loan_account_no}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="260" y="0" width="100" height="18"/>
+                <textFieldExpression><![CDATA[$F{product_name}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Amount" x="360" y="0" width="75" height="18"/>
+                <textFieldExpression><![CDATA[$F{loan_amount}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="435" y="0" width="60" height="18"/>
+                <textElement textAlignment="Center"/>
+                <textFieldExpression><![CDATA[($F{term_frequency} == null ? "" : $F{term_frequency} + " ") + ($F{term_frequency_period} == null ? "" : $F{term_frequency_period})]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Amount" x="495" y="0" width="40" height="18"/>
+                <textFieldExpression><![CDATA[$F{annual_interest_rate}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd/MM/yyyy">
+                <reportElement x="535" y="0" width="55" height="18"/>
+                <textFieldExpression><![CDATA[$F{submitted_on}]]></textFieldExpression>
+            </textField>
+            <!-- datediff(curdate(), submittedon_date) of the stretchy report, against the business date. DATE columns are read in the tenant zone (REPORT_TIME_ZONE), so the field is converted in that zone; currentDate is a JVM-zone java.sql.Date -->
+            <textField>
+                <reportElement x="590" y="0" width="45" height="18"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA[$F{submitted_on} == null ? null : Long.valueOf(java.time.temporal.ChronoUnit.DAYS.between(java.time.Instant.ofEpochMilli($F{submitted_on}.getTime()).atZone(($P{REPORT_TIME_ZONE} == null ? java.util.TimeZone.getDefault() : $P{REPORT_TIME_ZONE}).toZoneId()).toLocalDate(), new java.sql.Date($P{currentDate}.getTime()).toLocalDate()))]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="635" y="0" width="80" height="18"/>
+                <textFieldExpression><![CDATA[$F{loan_purpose}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement x="715" y="0" width="87" height="18"/>
+                <textFieldExpression><![CDATA[$F{loan_officer_name}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <textField>
+                <reportElement style="Label" x="0" y="2" width="300" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Printed by " + $P{currentUserName}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd MMM yyyy HH:mm">
+                <reportElement style="Label" x="300" y="2" width="200" height="14"/>
+                <textElement textAlignment="Center"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[$P{currentDateTime}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Label" x="602" y="2" width="170" height="14"/>
+                <textElement textAlignment="Right"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Label" x="772" y="2" width="30" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <summary>
+        <band height="26">
+            <line>
+                <reportElement x="0" y="2" width="802" height="1"/>
+            </line>
+            <textField>
+                <reportElement style="Value" x="0" y="5" width="360" height="18"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA["Grand total, " + $V{REPORT_COUNT} + " loans"]]></textFieldExpression>
+            </textField>
+            <!-- Only a single currency can be summed into one grand total -->
+            <textField>
+                <reportElement style="Total" x="360" y="5" width="75" height="18">
+                    <printWhenExpression><![CDATA[!"-1".equals($P{currencyId})]]></printWhenExpression>
+                </reportElement>
+                <textFieldExpression><![CDATA[$V{grandLoanAmount}]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+
+    <noData>
+        <band height="40">
+            <staticText>
+                <reportElement x="0" y="0" width="802" height="40"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="11"/></textElement>
+                <text><![CDATA[No submitted loans pending approval for the selected office and filters.]]></text>
+            </staticText>
+        </band>
+    </noData>
+</jasperReport>

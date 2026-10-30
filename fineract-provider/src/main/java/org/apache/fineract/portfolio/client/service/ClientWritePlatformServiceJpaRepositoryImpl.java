@@ -501,13 +501,14 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
             if (changes.containsKey(ClientApiConstants.villageIdParamName)) {
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.villageIdParamName);
-                clientForUpdate.updateVillage(newValue != null ? this.villageRepositoryWrapper.findOneWithNotFoundDetection(newValue) : null);
+                clientForUpdate
+                        .updateVillage(newValue != null ? this.villageRepositoryWrapper.findOneWithNotFoundDetection(newValue) : null);
             }
 
             if (changes.containsKey(ClientApiConstants.birthVillageIdParamName)) {
                 final Long newValue = command.longValueOfParameterNamed(ClientApiConstants.birthVillageIdParamName);
-                clientForUpdate.updateBirthVillage(
-                        newValue != null ? this.villageRepositoryWrapper.findOneWithNotFoundDetection(newValue) : null);
+                clientForUpdate
+                        .updateBirthVillage(newValue != null ? this.villageRepositoryWrapper.findOneWithNotFoundDetection(newValue) : null);
             }
 
             if (!changes.isEmpty()) {

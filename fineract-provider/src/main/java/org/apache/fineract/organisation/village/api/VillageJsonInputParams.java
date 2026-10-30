@@ -23,13 +23,7 @@ import java.util.Set;
 
 public enum VillageJsonInputParams {
 
-    ID("id"),
-    COMMUNE_ID("communeId"),
-    CODE("code"),
-    NAME_KHM("nameKhm"),
-    NAME_ENG("nameEng"),
-    LOCALE("locale"),
-    DATE_FORMAT("dateFormat");
+    ID("id"), COMMUNE_ID("communeId"), CODE("code"), NAME_KHM("nameKhm"), NAME_ENG("nameEng"), LOCALE("locale"), DATE_FORMAT("dateFormat");
 
     private final String value;
 

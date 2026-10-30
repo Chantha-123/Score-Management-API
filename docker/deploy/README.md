@@ -1,24 +1,32 @@
 # Testing-laptop deployment
 
-This folder is a self-contained bundle: three Docker images (database, API,
-frontend) plus a compose file. The testing laptop needs **only Docker** — no
-source code, Java, Node or internet access.
+The stack is three Docker images (database, API, frontend), all published as
+tags of one Docker Hub repository, `pichoudam/mini_pawnshop_v1`:
+`db-<version>`, `api-<version>` and `frontend-<version>`. The testing laptop
+needs **only Docker** and the small files in this folder. It pulls the images
+itself, so no source code, Java or Node is needed.
 
 ## 1. On the build machine (this repo)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File docker\build-images.ps1
+docker login        # once, as the Docker Hub account that owns pichoudam/mini_pawnshop_v1
+powershell -ExecutionPolicy Bypass -File docker\build-images.ps1 -Tag 1.0.0 -Push
 ```
 
-This builds `mini-pawnshop-db`, `mini-pawnshop-api` and
-`mini-pawnshop-frontend` (tag `local`) and saves them to
-`docker\deploy\images\score-images.tar`. The frontend repo is expected next to
-this one (`..\Score-Management-System-Frontend`); pass `-FrontendPath` otherwise.
-First API build takes ~7 minutes and needs internet.
+This builds and pushes `pichoudam/mini_pawnshop_v1:db-1.0.0`, `:api-1.0.0` and
+`:frontend-1.0.0`. Use a new `-Tag` for every release. The frontend repo is
+expected next to this one (`..\Score-Management-System-Frontend`); pass
+`-FrontendPath` otherwise. The first API build takes about 7 minutes. Add
+`-NoBuild` to push images that are already built.
 
-Copy the whole `docker\deploy` folder (USB drive, network share, …) to the
-testing laptop. Don't copy `.env` from another machine unless you mean to reuse
-its passwords.
+Give the testing laptop this folder **without** `images\` and `.env`. Only
+`compose.yml`, `.env.example`, `start.ps1`, `start.sh` and `open-firewall.ps1`
+are needed. If the Docker Hub repository is private, also run `docker login` on
+the laptop.
+
+For a laptop without internet, add `-Export`. That also writes
+`docker\deploy\images\score-images.tar`. Copy the tar along with the folder,
+and `start.ps1` loads it instead of pulling.
 
 ## 2. On the testing laptop
 
@@ -47,9 +55,11 @@ internet).
 
 Linux/macOS: `sh start.sh`
 
-The first start creates `.env` with random database passwords and runs the
-database migrations (a few minutes). Other actions: `start.ps1 -Action ps|logs|down|load`
-(`./start.sh ps|logs|down|load`).
+The first start creates `.env` with random database passwords. Check that
+`IMAGE_TAG` in `.env` is the version that was pushed. The start script then
+pulls the images and runs the database migrations, which takes a few minutes.
+Other actions: `start.ps1 -Action ps|logs|down|pull|load`
+(`./start.sh ps|logs|down|pull|load`).
 
 ## 3. Open the app
 
@@ -84,6 +94,8 @@ after accepting the certificate at `https://<IP>:8443/fineract-provider/actuator
   and set `BIND_ADDRESS=127.0.0.1` to keep the stack off the LAN.
 - **Security:** traffic to port 9002 is plain HTTP and logins use Basic auth, so
   use this only on a trusted network.
-- **Updating:** rebuild on the build machine, copy the new `images\score-images.tar`,
-  then on the laptop run `start.ps1 -Action load` and `start.ps1`. Data volumes
-  are kept, and new migrations run on start.
+- **Updating:** on the build machine, run `build-images.ps1 -Tag <new version> -Push`.
+  On the laptop, set `IMAGE_TAG=<new version>` in `.env` and run `start.ps1`.
+  The start script pulls the new images and recreates the containers. Data
+  volumes are kept, and new migrations run on start. If you re-pushed the same
+  tag, run `start.ps1 -Action pull` first.

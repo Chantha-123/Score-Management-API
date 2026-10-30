@@ -81,8 +81,8 @@ public enum LoanSubStatus {
                         codePrefix + LoanSubStatus.FORECLOSED.getCode(), "Foreclosed");
             break;
             case PAID_OFF:
-                optionData = new EnumOptionData(LoanSubStatus.PAID_OFF.getValue().longValue(), codePrefix + LoanSubStatus.PAID_OFF.getCode(),
-                        "Paid off");
+                optionData = new EnumOptionData(LoanSubStatus.PAID_OFF.getValue().longValue(),
+                        codePrefix + LoanSubStatus.PAID_OFF.getCode(), "Paid off");
             break;
             default:
                 optionData = new EnumOptionData(LoanSubStatus.INVALID.getValue().longValue(), LoanSubStatus.INVALID.getCode(), "Invalid");

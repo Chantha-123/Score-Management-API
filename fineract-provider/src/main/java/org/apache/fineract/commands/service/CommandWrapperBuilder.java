@@ -914,6 +914,24 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder loanChargeFeeTransaction(final Long loanId) {
+        this.actionName = "CHARGEFEE";
+        this.entityName = "LOAN";
+        this.entityId = null;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/transactions?command=chargeFee";
+        return this;
+    }
+
+    public CommandWrapperBuilder undoLoanChargeFeeTransaction(final Long loanId, final Long transactionId) {
+        this.actionName = "UNDOCHARGEFEE";
+        this.entityName = "LOAN";
+        this.entityId = transactionId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/transactions/" + transactionId + "?command=undoChargeFee";
+        return this;
+    }
+
     public CommandWrapperBuilder loanBatchPrincipalPaydown(final Long loanId) {
         this.actionName = "BATCHPRINCIPALPAYDOWN";
         this.entityName = "LOAN";
@@ -3502,14 +3520,14 @@ public class CommandWrapperBuilder {
         this.href = "/businessdate";
         return this;
     }
-    
+
     public CommandWrapperBuilder createDailySpotRate() {
         this.actionName = "CREATE";
         this.entityName = "DAILYSPOTRATE";
         this.href = "/dailyspotrates";
         return this;
     }
- 
+
     public CommandWrapperBuilder updateDailySpotRate(final Long dailySpotRateId) {
         this.actionName = "UPDATE";
         this.entityName = "DAILYSPOTRATE";

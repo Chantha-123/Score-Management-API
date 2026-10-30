@@ -1,6 +1,6 @@
 # Starts the test stack on this laptop (Windows / Docker Desktop).
-#   powershell -ExecutionPolicy Bypass -File start.ps1 [-Action up|down|ps|logs|load]
-param([ValidateSet('up', 'down', 'ps', 'logs', 'load')][string]$Action = 'up')
+#   powershell -ExecutionPolicy Bypass -File start.ps1 [-Action up|down|ps|logs|pull|load]
+param([ValidateSet('up', 'down', 'ps', 'logs', 'pull', 'load')][string]$Action = 'up')
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
@@ -15,6 +15,10 @@ function Get-EnvValue([string]$name, [string]$default) {
     return $default
 }
 
+# `docker images -q` prints nothing (and no stderr) for a missing image. `docker image inspect`
+# writes "No such image" to stderr, which Windows PowerShell 5.1 turns into a terminating error here.
+function Test-Image([string]$image) { [bool](& docker images -q $image) }
+
 function New-Secret { -join ((48..57) + (97..122) | Get-Random -Count 24 | ForEach-Object { [char]$_ }) }
 
 if (-not (Test-Path .env)) {
@@ -25,14 +29,26 @@ if (-not (Test-Path .env)) {
     Write-Host 'Created .env with generated database passwords (keep this file).'
 }
 
-$tag = Get-EnvValue 'IMAGE_TAG' 'local'
-if ($Action -eq 'load' -or ($Action -eq 'up' -and (Test-Path images\score-images.tar))) {
-    & docker image inspect "$(Get-EnvValue 'API_IMAGE' 'mini-pawnshop-api'):$tag" *> $null
-    if ($Action -eq 'load' -or $LASTEXITCODE -ne 0) {
-        Write-Host 'Loading images from images\score-images.tar ...'
-        Invoke-Docker load -i images\score-images.tar
-    }
-    if ($Action -eq 'load') { return }
+$repo = Get-EnvValue 'IMAGE_REPO' 'pichoudam/mini_pawnshop_v1'
+$tag = Get-EnvValue 'IMAGE_TAG' ''
+if (-not $tag) { throw 'Set IMAGE_TAG in .env to the pushed version (e.g. IMAGE_TAG=1.0.0).' }
+function Get-MissingImages { foreach ($svc in 'db', 'api', 'frontend') { if (-not (Test-Image "${repo}:$svc-$tag")) { "${repo}:$svc-$tag" } } }
+
+# Offline laptops: images\score-images.tar (build-images.ps1 -Export) instead of Docker Hub.
+if ($Action -eq 'load' -or ($Action -eq 'up' -and (Test-Path images\score-images.tar) -and (Get-MissingImages))) {
+    Write-Host 'Loading images from images\score-images.tar ...'
+    Invoke-Docker load -i images\score-images.tar
+}
+
+if ($Action -eq 'pull' -or ($Action -eq 'up' -and (Get-MissingImages))) {
+    Write-Host "Pulling ${repo}:*-$tag from Docker Hub ..."
+    Invoke-Docker compose pull
+}
+
+if ($Action -in 'load', 'pull') {
+    $missing = Get-MissingImages
+    if ($missing) { throw "Image(s) not found: $($missing -join ', ')" }
+    Write-Host 'All images present.'; return
 }
 
 switch ($Action) {

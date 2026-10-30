@@ -364,8 +364,8 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
                 templateData.clientClassificationOptions, templateData.clientNonPersonConstitutionOptions,
                 templateData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, templateData.clientLegalFormOptions,
                 templateData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
-                clientData.isStaff, clientCollateralManagements, clientData.villageId, clientData.villageNameEng,
-                clientData.birthVillageId, clientData.birthVillageNameEng);
+                clientData.isStaff, clientCollateralManagements, clientData.villageId, clientData.villageNameEng, clientData.birthVillageId,
+                clientData.birthVillageNameEng);
 
     }
 
@@ -383,8 +383,8 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
                 clientData.clientClassificationOptions, clientData.clientNonPersonConstitutionOptions,
                 clientData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, clientData.clientLegalFormOptions,
                 clientData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
-                clientData.isStaff, clientCollateralManagements, clientData.villageId, clientData.villageNameEng,
-                clientData.birthVillageId, clientData.birthVillageNameEng);
+                clientData.isStaff, clientCollateralManagements, clientData.villageId, clientData.villageNameEng, clientData.birthVillageId,
+                clientData.birthVillageNameEng);
 
     }
 
@@ -400,8 +400,8 @@ public final class ClientData implements Comparable<ClientData>, Serializable {
                 clientData.clientTypeOptions, clientData.clientClassificationOptions, clientData.clientNonPersonConstitutionOptions,
                 clientData.clientNonPersonMainBusinessLineOptions, clientData.clientNonPersonDetails, clientData.clientLegalFormOptions,
                 clientData.familyMemberOptions, clientData.legalForm, clientData.address, clientData.isAddressEnabled, null,
-                clientData.isStaff, clientCollateralManagements, clientData.villageId, clientData.villageNameEng,
-                clientData.birthVillageId, clientData.birthVillageNameEng);
+                clientData.isStaff, clientCollateralManagements, clientData.villageId, clientData.villageNameEng, clientData.birthVillageId,
+                clientData.birthVillageNameEng);
 
     }
 

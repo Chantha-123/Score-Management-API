@@ -40,8 +40,7 @@ public class ProvinceCommand {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("Province");
 
-        baseDataValidator.reset().parameter(ProvinceJsonInputParams.CODE.getValue()).value(this.code).notBlank()
-                .notExceedingLengthOf(20);
+        baseDataValidator.reset().parameter(ProvinceJsonInputParams.CODE.getValue()).value(this.code).notBlank().notExceedingLengthOf(20);
         baseDataValidator.reset().parameter(ProvinceJsonInputParams.NAME_KHM.getValue()).value(this.nameKhm).notBlank()
                 .notExceedingLengthOf(100);
         baseDataValidator.reset().parameter(ProvinceJsonInputParams.NAME_ENG.getValue()).value(this.nameEng).notBlank()
@@ -57,12 +56,12 @@ public class ProvinceCommand {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("Province");
 
-        baseDataValidator.reset().parameter(ProvinceJsonInputParams.CODE.getValue()).value(this.code).ignoreIfNull()
-                .notBlank().notExceedingLengthOf(20);
-        baseDataValidator.reset().parameter(ProvinceJsonInputParams.NAME_KHM.getValue()).value(this.nameKhm).ignoreIfNull()
-                .notBlank().notExceedingLengthOf(100);
-        baseDataValidator.reset().parameter(ProvinceJsonInputParams.NAME_ENG.getValue()).value(this.nameEng).ignoreIfNull()
-                .notBlank().notExceedingLengthOf(100);
+        baseDataValidator.reset().parameter(ProvinceJsonInputParams.CODE.getValue()).value(this.code).ignoreIfNull().notBlank()
+                .notExceedingLengthOf(20);
+        baseDataValidator.reset().parameter(ProvinceJsonInputParams.NAME_KHM.getValue()).value(this.nameKhm).ignoreIfNull().notBlank()
+                .notExceedingLengthOf(100);
+        baseDataValidator.reset().parameter(ProvinceJsonInputParams.NAME_ENG.getValue()).value(this.nameEng).ignoreIfNull().notBlank()
+                .notExceedingLengthOf(100);
 
         baseDataValidator.reset().anyOfNotNull(this.code, this.nameKhm, this.nameEng);
 

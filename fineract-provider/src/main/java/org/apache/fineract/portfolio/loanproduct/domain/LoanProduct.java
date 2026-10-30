@@ -376,22 +376,21 @@ public class LoanProduct extends AbstractPersistableCustom {
                 .bigDecimalValueOfParameterNamed(LoanProductConstants.EARLY_PAYOFF_CHARGE_AMOUNT_PARAM_NAME);
 
         final LoanProduct loanProduct = new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, currency,
-                principal, minPrincipal,
-                maxPrincipal, interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod, interestFrequencyType,
-                annualInterestRate, interestMethod, interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, repaymentEvery,
-                repaymentFrequencyType, numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, graceOnPrincipalPayment,
-                recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment, graceOnInterestCharged, amortizationMethod,
-                inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle, startDate, closeDate, externalId,
-                useBorrowerCycle, loanProductBorrowerCycleVariations, multiDisburseLoan, maxTrancheCount, outstandingLoanBalance,
-                graceOnArrearsAgeing, overdueDaysForNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
-                interestRecalculationSettings, minimumDaysBetweenDisbursalAndFirstRepayment, holdGuarantorFunds,
-                loanProductGuaranteeDetails, principalThresholdForLastInstallment, accountMovesOutOfNPAOnlyOnArrearsCompletion,
-                canDefineEmiAmount, installmentAmountInMultiplesOf, loanConfigurableAttributes, isLinkedToFloatingInterestRates,
-                floatingRate, interestRateDifferential, minDifferentialLendingRate, maxDifferentialLendingRate,
-                defaultDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed,
-                minimumGapBetweenInstallments, maximumGapBetweenInstallments, syncExpectedWithDisbursementDate, canUseForTopup,
-                isEqualAmortization, productRates, fixedPrincipalPercentagePerInstallment, disallowExpectedDisbursements,
-                allowApprovedDisbursedAmountsOverApplied, overAppliedCalculationType, overAppliedNumber);
+                principal, minPrincipal, maxPrincipal, interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod,
+                interestFrequencyType, annualInterestRate, interestMethod, interestCalculationPeriodMethod,
+                allowPartialPeriodInterestCalcualtion, repaymentEvery, repaymentFrequencyType, numberOfRepayments, minNumberOfRepayments,
+                maxNumberOfRepayments, graceOnPrincipalPayment, recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment,
+                graceOnInterestCharged, amortizationMethod, inArrearsTolerance, productCharges, accountingRuleType, includeInBorrowerCycle,
+                startDate, closeDate, externalId, useBorrowerCycle, loanProductBorrowerCycleVariations, multiDisburseLoan, maxTrancheCount,
+                outstandingLoanBalance, graceOnArrearsAgeing, overdueDaysForNPA, daysInMonthType, daysInYearType,
+                isInterestRecalculationEnabled, interestRecalculationSettings, minimumDaysBetweenDisbursalAndFirstRepayment,
+                holdGuarantorFunds, loanProductGuaranteeDetails, principalThresholdForLastInstallment,
+                accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineEmiAmount, installmentAmountInMultiplesOf, loanConfigurableAttributes,
+                isLinkedToFloatingInterestRates, floatingRate, interestRateDifferential, minDifferentialLendingRate,
+                maxDifferentialLendingRate, defaultDifferentialLendingRate, isFloatingInterestRateCalculationAllowed,
+                isVariableInstallmentsAllowed, minimumGapBetweenInstallments, maximumGapBetweenInstallments,
+                syncExpectedWithDisbursementDate, canUseForTopup, isEqualAmortization, productRates, fixedPrincipalPercentagePerInstallment,
+                disallowExpectedDisbursements, allowApprovedDisbursedAmountsOverApplied, overAppliedCalculationType, overAppliedNumber);
 
         loanProduct.loanProductRelatedDetail.setEarlyPayoffChargeCalculationType(earlyPayoffChargeCalculationType);
         loanProduct.loanProductRelatedDetail.setEarlyPayoffChargeAmount(earlyPayoffChargeAmount);

@@ -237,7 +237,7 @@ public final class LoanSummaryWrapper {
             return total;
         }
         for (final LoanCharge loanCharge : charges) {
-            if (!loanCharge.isPenaltyCharge() && loanCharge.getAmountPaid(currency).isGreaterThanZero()) {
+            if (loanCharge.isActive() && !loanCharge.isPenaltyCharge() && loanCharge.getAmountPaid(currency).isGreaterThanZero()) {
                 total = total.plus(loanCharge.getAmountPaid(currency));
             }
         }

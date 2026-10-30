@@ -1,0 +1,658 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+
+<!-- Stretchy report "Active Loans in last installment Summary(Pentaho)" (report_type = Jasper), converted from the SQL of the Table report "Active Loans in last installment Summary".
+     Run with R_officeId, R_loanOfficerId, R_currencyId, R_fundId, R_loanProductId, R_loanPurposeId (-1 = All, -10 = none/blank for officer, fund and purpose). R_parType (1 Principal, 2 +Interest, 3 +Fees, 4 +Penalties). -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="active-loans-in-last-installment-summary-pentaho" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="NoDataSection">
+
+    <!-- Names may be Khmer: lay out Khmer runs with Java's text engine (OpenPDF cannot shape them) -->
+    <property name="net.sf.jasperreports.export.pdf.glyph.renderer.blocks" value="khmer"/>
+    <!-- CSV/XLSX: keep only column headers, detail rows and totals (no repeated titles / page footers) -->
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.title" value="title"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.csv.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
+    <property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.columnHeader" value="columnHeader"/>
+
+    <!-- Font set from fonts/battambang/fonts.xml: DejaVu Sans, with Battambang for Khmer characters.
+         Battambang lines need about 2x the font size in height, so 8pt rows are 18pt tall. -->
+    <style name="Base" isDefault="true" fontName="DejaVu Sans Khmer" fontSize="8" isBlankWhenNull="true">
+        <box leftPadding="2" rightPadding="2"/>
+    </style>
+    <style name="Label" style="Base" forecolor="#555555"/>
+    <style name="Value" style="Base" isBold="true"/>
+    <style name="ColumnHeader" style="Base" isBold="true" mode="Opaque" backcolor="#E6E6E6" vTextAlign="Middle"/>
+    <style name="Amount" style="Base" hTextAlign="Right" pattern="#,##0.00"/>
+    <style name="Total" style="Amount" isBold="true"/>
+    <style name="Count" style="Base" hTextAlign="Right" pattern="#,##0"/>
+    <style name="TotalCount" style="Count" isBold="true"/>
+
+    <!-- Supplied by the service on every run -->
+    <parameter name="currentDate" class="java.util.Date"/>
+    <parameter name="currentDateTime" class="java.util.Date"/>
+    <parameter name="currentUserHierarchy" class="java.lang.String"/>
+    <parameter name="currentUserName" class="java.lang.String"/>
+    <!-- Stretchy parameter variables; defaults apply when the R_ value is missing or blank -->
+    <parameter name="officeId" class="java.lang.Long">
+        <!-- OfficeIdSelectOne has no "All": default to the head office (root of the hierarchy) -->
+        <defaultValueExpression><![CDATA[1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="loanOfficerId" class="java.lang.Long">
+        <defaultValueExpression><![CDATA[-1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="currencyId" class="java.lang.String">
+        <defaultValueExpression><![CDATA["-1"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="fundId" class="java.lang.Long">
+        <defaultValueExpression><![CDATA[-1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="loanProductId" class="java.lang.Long">
+        <defaultValueExpression><![CDATA[-1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="loanPurposeId" class="java.lang.Long">
+        <defaultValueExpression><![CDATA[-1L]]></defaultValueExpression>
+    </parameter>
+    <parameter name="parType" class="java.lang.Long">
+        <!-- 1 Principal Only, 2 + Interest, 3 + Fees, 4 + Penalties (the stretchy default 0 means "invalid PAR Type") -->
+        <defaultValueExpression><![CDATA[1L]]></defaultValueExpression>
+    </parameter>
+
+    <queryString>
+        <![CDATA[
+SELECT (SELECT so.name FROM m_office so WHERE so.id = $P{officeId}) AS selected_office_name,
+       (SELECT ss.display_name FROM m_staff ss WHERE ss.id = $P{loanOfficerId}) AS selected_loan_officer,
+       (SELECT sp.name FROM m_product_loan sp WHERE sp.id = $P{loanProductId}) AS selected_loan_product,
+       (SELECT sf.name FROM m_fund sf WHERE sf.id = $P{fundId}) AS selected_fund,
+       (SELECT sc.code_value FROM m_code_value sc WHERE sc.id = $P{loanPurposeId}) AS selected_loan_purpose,
+       mo.id AS office_id,
+       CONCAT(REPEAT('..', LENGTH(mo.hierarchy) - LENGTH(REPLACE(mo.hierarchy, '.', '')) - 1), mo.name) AS office_name,
+       x.currency_code,
+       x.currency,
+       x.client_count, x.active_loan_count, x.arrears_loan_count,
+       x.principal, x.principal_repaid, x.principal_outstanding, x.principal_overdue,
+       x.interest, x.interest_repaid, x.interest_outstanding, x.interest_overdue,
+       x.fees, x.fees_repaid, x.fees_outstanding, x.fees_overdue,
+       x.penalties, x.penalties_repaid, x.penalties_outstanding, x.penalties_overdue,
+       CASE WHEN $P{parType} = 1 THEN ROUND(x.principal_overdue * 100 / NULLIF(x.principal_outstanding, 0), 2)
+            WHEN $P{parType} = 2 THEN ROUND((x.principal_overdue + x.interest_overdue) * 100
+                 / NULLIF(x.principal_outstanding + x.interest_outstanding, 0), 2)
+            WHEN $P{parType} = 3 THEN ROUND((x.principal_overdue + x.interest_overdue + x.fees_overdue) * 100
+                 / NULLIF(x.principal_outstanding + x.interest_outstanding + x.fees_outstanding, 0), 2)
+            -- Denominator kept as in the stretchy report (it adds penalties_overdue, not penalties_outstanding)
+            WHEN $P{parType} = 4 THEN ROUND((x.principal_overdue + x.interest_overdue + x.fees_overdue + x.penalties_overdue) * 100
+                 / NULLIF(x.principal_outstanding + x.interest_outstanding + x.fees_outstanding + x.penalties_overdue, 0), 2)
+       END AS par_percent
+FROM m_office mo
+JOIN (SELECT ounder.id AS branch,
+             l.currency_code,
+             COALESCE(cur.display_symbol, l.currency_code) AS currency,
+             COUNT(DISTINCT c.id) AS client_count,
+             COUNT(DISTINCT l.id) AS active_loan_count,
+             COUNT(DISTINCT laa.loan_id) AS arrears_loan_count,
+             SUM(l.principal_disbursed_derived) AS principal,
+             SUM(l.principal_repaid_derived) AS principal_repaid,
+             SUM(l.principal_outstanding_derived) AS principal_outstanding,
+             SUM(COALESCE(laa.principal_overdue_derived, 0)) AS principal_overdue,
+             SUM(l.interest_charged_derived) AS interest,
+             SUM(l.interest_repaid_derived) AS interest_repaid,
+             SUM(l.interest_outstanding_derived) AS interest_outstanding,
+             SUM(COALESCE(laa.interest_overdue_derived, 0)) AS interest_overdue,
+             SUM(l.fee_charges_charged_derived) AS fees,
+             SUM(l.fee_charges_repaid_derived) AS fees_repaid,
+             SUM(l.fee_charges_outstanding_derived) AS fees_outstanding,
+             SUM(COALESCE(laa.fee_charges_overdue_derived, 0)) AS fees_overdue,
+             SUM(l.penalty_charges_charged_derived) AS penalties,
+             SUM(l.penalty_charges_repaid_derived) AS penalties_repaid,
+             SUM(l.penalty_charges_outstanding_derived) AS penalties_outstanding,
+             SUM(COALESCE(laa.penalty_charges_overdue_derived, 0)) AS penalties_overdue
+      FROM m_office o
+      JOIN m_office ounder ON ounder.hierarchy LIKE CONCAT(o.hierarchy, '%')
+                          AND ounder.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+      JOIN m_client c ON c.office_id = ounder.id
+      JOIN m_loan l ON l.client_id = c.id
+      JOIN (SELECT r.loan_id, MIN(r.installment) AS next_installment
+            FROM m_loan_repayment_schedule r
+            WHERE r.completed_derived = FALSE
+              AND r.duedate >= $P{currentDate}
+            GROUP BY r.loan_id) li ON li.loan_id = l.id AND li.next_installment = l.number_of_repayments
+      LEFT JOIN m_loan_arrears_aging laa ON laa.loan_id = l.id
+      LEFT JOIN m_currency cur ON cur.code = l.currency_code
+      WHERE o.id = $P{officeId}
+        AND ($P{currencyId} = '-1' OR l.currency_code = $P{currencyId})
+        AND ($P{loanProductId} = -1 OR l.product_id = $P{loanProductId})
+        AND ($P{loanOfficerId} = -1 OR COALESCE(l.loan_officer_id, -10) = $P{loanOfficerId})
+        AND ($P{fundId} = -1 OR COALESCE(l.fund_id, -10) = $P{fundId})
+        AND ($P{loanPurposeId} = -1 OR COALESCE(l.loanpurpose_cv_id, -10) = $P{loanPurposeId})
+        AND l.loan_status_id = 300
+      GROUP BY ounder.id, l.currency_code, cur.display_symbol) x ON x.branch = mo.id
+ORDER BY x.currency_code, mo.hierarchy
+        ]]>
+    </queryString>
+
+    <!-- Field names = SQL aliases, lowercase snake_case (PostgreSQL folds unquoted aliases to lowercase) -->
+    <field name="selected_office_name" class="java.lang.String"/>
+    <field name="selected_loan_officer" class="java.lang.String"/>
+    <field name="selected_loan_product" class="java.lang.String"/>
+    <field name="selected_fund" class="java.lang.String"/>
+    <field name="selected_loan_purpose" class="java.lang.String"/>
+    <field name="office_id" class="java.lang.Long"/>
+    <field name="currency_code" class="java.lang.String"/>
+    <field name="par_percent" class="java.math.BigDecimal"/>
+    <field name="office_name" class="java.lang.String"/>
+    <field name="client_count" class="java.lang.Long"/>
+    <field name="active_loan_count" class="java.lang.Long"/>
+    <field name="arrears_loan_count" class="java.lang.Long"/>
+    <field name="principal" class="java.math.BigDecimal"/>
+    <field name="principal_repaid" class="java.math.BigDecimal"/>
+    <field name="principal_outstanding" class="java.math.BigDecimal"/>
+    <field name="principal_overdue" class="java.math.BigDecimal"/>
+    <field name="interest" class="java.math.BigDecimal"/>
+    <field name="interest_repaid" class="java.math.BigDecimal"/>
+    <field name="interest_outstanding" class="java.math.BigDecimal"/>
+    <field name="interest_overdue" class="java.math.BigDecimal"/>
+    <field name="currency" class="java.lang.String"/>
+    <field name="fees" class="java.math.BigDecimal"/>
+    <field name="fees_repaid" class="java.math.BigDecimal"/>
+    <field name="fees_outstanding" class="java.math.BigDecimal"/>
+    <field name="fees_overdue" class="java.math.BigDecimal"/>
+    <field name="penalties" class="java.math.BigDecimal"/>
+    <field name="penalties_repaid" class="java.math.BigDecimal"/>
+    <field name="penalties_outstanding" class="java.math.BigDecimal"/>
+    <field name="penalties_overdue" class="java.math.BigDecimal"/>
+
+    <variable name="groupClientCount" class="java.lang.Long" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{client_count}]]></variableExpression>
+    </variable>
+    <variable name="groupActiveLoanCount" class="java.lang.Long" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{active_loan_count}]]></variableExpression>
+    </variable>
+    <variable name="groupArrearsLoanCount" class="java.lang.Long" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{arrears_loan_count}]]></variableExpression>
+    </variable>
+    <variable name="groupPrincipal" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{principal}]]></variableExpression>
+    </variable>
+    <variable name="groupPrincipalRepaid" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{principal_repaid}]]></variableExpression>
+    </variable>
+    <variable name="groupPrincipalOutstanding" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{principal_outstanding}]]></variableExpression>
+    </variable>
+    <variable name="groupPrincipalOverdue" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{principal_overdue}]]></variableExpression>
+    </variable>
+    <variable name="groupInterest" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{interest}]]></variableExpression>
+    </variable>
+    <variable name="groupInterestRepaid" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{interest_repaid}]]></variableExpression>
+    </variable>
+    <variable name="groupInterestOutstanding" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{interest_outstanding}]]></variableExpression>
+    </variable>
+    <variable name="groupInterestOverdue" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{interest_overdue}]]></variableExpression>
+    </variable>
+    <variable name="groupFees" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{fees}]]></variableExpression>
+    </variable>
+    <variable name="groupFeesRepaid" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{fees_repaid}]]></variableExpression>
+    </variable>
+    <variable name="groupFeesOutstanding" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{fees_outstanding}]]></variableExpression>
+    </variable>
+    <variable name="groupFeesOverdue" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{fees_overdue}]]></variableExpression>
+    </variable>
+    <variable name="groupPenalties" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{penalties}]]></variableExpression>
+    </variable>
+    <variable name="groupPenaltiesRepaid" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{penalties_repaid}]]></variableExpression>
+    </variable>
+    <variable name="groupPenaltiesOutstanding" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{penalties_outstanding}]]></variableExpression>
+    </variable>
+    <variable name="groupPenaltiesOverdue" class="java.math.BigDecimal" resetType="Group" resetGroup="currencyGroup" calculation="Sum">
+        <variableExpression><![CDATA[$F{penalties_overdue}]]></variableExpression>
+    </variable>
+
+    <group name="currencyGroup">
+        <groupExpression><![CDATA[$F{currency_code}]]></groupExpression>
+        <groupHeader>
+            <band height="22">
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="802" height="18"/>
+                    <textFieldExpression><![CDATA["Currency: " + $F{currency}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+        <groupFooter>
+        <band height="40">
+                <line>
+                    <reportElement x="0" y="1" width="802" height="1"/>
+                    <graphicElement><pen lineWidth="0.5"/></graphicElement>
+                </line>
+                <textField>
+                    <reportElement style="Value" x="0" y="2" width="154" height="18"/>
+                    <textElement textAlignment="Right"/>
+                    <textFieldExpression><![CDATA["Total " + $F{currency} + ", " + $V{currencyGroup_COUNT} + " offices"]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="TotalCount" positionType="Float" x="154" y="2" width="40" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupClientCount}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="TotalCount" positionType="Float" x="194" y="2" width="40" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupActiveLoanCount}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="TotalCount" positionType="Float" x="234" y="2" width="40" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupArrearsLoanCount}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="274" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPrincipal}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="340" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPrincipalRepaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="406" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPrincipalOutstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="472" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPrincipalOverdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="538" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupInterest}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="604" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupInterestRepaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="670" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupInterestOutstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="736" y="2" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupInterestOverdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="274" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupFees}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="340" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupFeesRepaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="406" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupFeesOutstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="472" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupFeesOverdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="538" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPenalties}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="604" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPenaltiesRepaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="670" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPenaltiesOutstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Total" positionType="Float" x="736" y="20" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$V{groupPenaltiesOverdue}]]></textFieldExpression>
+                </textField>
+        </band>
+        </groupFooter>
+    </group>
+
+    <title>
+        <band height="110">
+            <staticText>
+                <reportElement x="0" y="0" width="802" height="24"/>
+                <textElement textAlignment="Center"><font size="13" isBold="true"/></textElement>
+                <text><![CDATA[Active Loans in Last Installment - Summary]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Label" x="0" y="26" width="80" height="18"/>
+                <text><![CDATA[Office]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="80" y="26" width="311" height="18"/>
+                <textFieldExpression><![CDATA[$F{selected_office_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="401" y="26" width="80" height="18"/>
+                <text><![CDATA[Currency]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="481" y="26" width="311" height="18"/>
+                <textFieldExpression><![CDATA["-1".equals($P{currencyId}) ? "All" : $P{currencyId}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="46" width="80" height="18"/>
+                <text><![CDATA[Loan Officer]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="80" y="46" width="311" height="18"/>
+                <textFieldExpression><![CDATA[$P{loanOfficerId} == -1L ? "All" : ($P{loanOfficerId} == -10L ? "None" : $F{selected_loan_officer})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="401" y="46" width="80" height="18"/>
+                <text><![CDATA[Product]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="481" y="46" width="311" height="18"/>
+                <textFieldExpression><![CDATA[$P{loanProductId} == -1L ? "All" : $F{selected_loan_product}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="66" width="80" height="18"/>
+                <text><![CDATA[Fund]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="80" y="66" width="311" height="18"/>
+                <textFieldExpression><![CDATA[$P{fundId} == -1L ? "All" : ($P{fundId} == -10L ? "None" : $F{selected_fund})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="401" y="66" width="80" height="18"/>
+                <text><![CDATA[Loan Purpose]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="481" y="66" width="311" height="18"/>
+                <textFieldExpression><![CDATA[$P{loanPurposeId} == -1L ? "All" : ($P{loanPurposeId} == -10L ? "None" : $F{selected_loan_purpose})]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="0" y="86" width="80" height="18"/>
+                <text><![CDATA[PAR Type]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="80" y="86" width="311" height="18"/>
+                <textFieldExpression><![CDATA[$P{parType} == 1L ? "Principal Only" : $P{parType} == 2L ? "Principal + Interest" : $P{parType} == 3L ? "Principal + Interest + Fees" : $P{parType} == 4L ? "Principal + Interest + Fees + Penalties" : "invalid PAR Type"]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Label" x="401" y="86" width="80" height="18"/>
+                <text><![CDATA[As of]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Value" x="481" y="86" width="311" height="18"/>
+                <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMM yyyy", $P{REPORT_LOCALE}).format($P{currentDate})]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="44">
+            <staticText>
+                <reportElement style="ColumnHeader" x="0" y="0" width="154" height="22"/>
+                <text><![CDATA[Office / Branch]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="154" y="0" width="40" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Clients]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="194" y="0" width="40" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Active Loans]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="234" y="0" width="40" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[In Arrears]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="274" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Loans Disbursed]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="340" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Principal Repaid]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="406" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Principal Outstanding]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="472" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Principal Overdue]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="538" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Total Interest]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="604" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Interest Repaid]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="670" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Interest Outstanding]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="736" y="0" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Interest Overdue]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="0" y="22" width="154" height="22"/>
+                <text><![CDATA[Portfolio at Risk %]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="154" y="22" width="120" height="22"/>
+                <text><![CDATA[Currency]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="274" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Total Fees]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="340" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Fees Repaid]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="406" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Fees Outstanding]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="472" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Fees Overdue]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="538" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Total Penalties]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="604" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Penalties Repaid]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="670" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Penalties Outstanding]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="ColumnHeader" x="736" y="22" width="66" height="22"/>
+                    <textElement textAlignment="Right"/>
+                <text><![CDATA[Penalties Overdue]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="36">
+                <textField textAdjust="StretchHeight">
+                    <reportElement x="0" y="0" width="154" height="18"/>
+                    <textFieldExpression><![CDATA[$F{office_name}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Count" x="154" y="0" width="40" height="18"/>
+                    <textFieldExpression><![CDATA[$F{client_count}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Count" x="194" y="0" width="40" height="18"/>
+                    <textFieldExpression><![CDATA[$F{active_loan_count}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Count" x="234" y="0" width="40" height="18"/>
+                    <textFieldExpression><![CDATA[$F{arrears_loan_count}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="274" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{principal}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="340" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{principal_repaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="406" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{principal_outstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="472" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{principal_overdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="538" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{interest}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="604" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{interest_repaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="670" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{interest_outstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" x="736" y="0" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{interest_overdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement positionType="Float" x="0" y="18" width="154" height="18"/>
+                    <textFieldExpression><![CDATA[$P{parType} >= 1L && $P{parType} <= 4L ? ($F{par_percent} == null ? "" : new java.text.DecimalFormat("#,##0.00").format($F{par_percent})) : "invalid PAR Type"]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement positionType="Float" x="154" y="18" width="120" height="18"/>
+                    <textFieldExpression><![CDATA[$F{currency}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="274" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{fees}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="340" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{fees_repaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="406" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{fees_outstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="472" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{fees_overdue}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="538" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{penalties}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="604" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{penalties_repaid}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="670" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{penalties_outstanding}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="Amount" positionType="Float" x="736" y="18" width="66" height="18"/>
+                    <textFieldExpression><![CDATA[$F{penalties_overdue}]]></textFieldExpression>
+                </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <textField>
+                <reportElement style="Label" x="0" y="2" width="300" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Printed by " + $P{currentUserName}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd MMM yyyy HH:mm">
+                <reportElement style="Label" x="301" y="2" width="200" height="14"/>
+                <textElement textAlignment="Center"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[$P{currentDateTime}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Label" x="602" y="2" width="170" height="14"/>
+                <textElement textAlignment="Right"><font size="7"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Label" x="772" y="2" width="30" height="14"/>
+                <textElement><font size="7"/></textElement>
+                <textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <noData>
+        <band height="40">
+            <staticText>
+                <reportElement x="0" y="0" width="802" height="40"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="11"/></textElement>
+                <text><![CDATA[No active loans in their last installment for the selected office and filters.]]></text>
+            </staticText>
+        </band>
+    </noData>
+</jasperReport>

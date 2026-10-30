@@ -92,7 +92,8 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         && loanCharge.getChargeCalculation().isPercentageBased()) {
                     cumulative = cumulative.plus(loanCharge.chargeAmount());
                 } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)
-                        && loanCharge.getChargeCalculation().isPercentageBased()) {
+                        && loanCharge.getChargeCalculation().isPercentageBased()
+                        && !loanCharge.getChargeCalculation().isPercentageOfOutstandingAmount()) {
                     BigDecimal amount = BigDecimal.ZERO;
                     if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterest()) {
                         amount = amount.add(totalPrincipal.getAmount()).add(totalInterest.getAmount());
@@ -196,7 +197,8 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         && loanCharge.getChargeCalculation().isPercentageBased()) {
                     cumulative = cumulative.plus(loanCharge.chargeAmount());
                 } else if (loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)
-                        && loanCharge.getChargeCalculation().isPercentageBased()) {
+                        && loanCharge.getChargeCalculation().isPercentageBased()
+                        && !loanCharge.getChargeCalculation().isPercentageOfOutstandingAmount()) {
                     BigDecimal amount = BigDecimal.ZERO;
                     if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterest()) {
                         amount = amount.add(totalPrincipal.getAmount()).add(totalInterest.getAmount());

@@ -40,10 +40,9 @@ public final class BatchPrincipalPaydownApiConstants {
     public static final String noteParamName = "note";
     public static final String externalIdParamName = "externalId";
 
-    public static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = Collections
-            .unmodifiableSet(new HashSet<>(Arrays.asList(localeParamName, dateFormatParamName, transactionDateParamName,
-                    principalAmountParamName, noteParamName, externalIdParamName, PaymentDetailConstants.paymentTypeParamName,
-                    PaymentDetailConstants.accountNumberParamName, PaymentDetailConstants.checkNumberParamName,
-                    PaymentDetailConstants.routingCodeParamName, PaymentDetailConstants.receiptNumberParamName,
-                    PaymentDetailConstants.bankNumberParamName)));
+    public static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = Collections.unmodifiableSet(new HashSet<>(
+            Arrays.asList(localeParamName, dateFormatParamName, transactionDateParamName, principalAmountParamName, noteParamName,
+                    externalIdParamName, PaymentDetailConstants.paymentTypeParamName, PaymentDetailConstants.accountNumberParamName,
+                    PaymentDetailConstants.checkNumberParamName, PaymentDetailConstants.routingCodeParamName,
+                    PaymentDetailConstants.receiptNumberParamName, PaymentDetailConstants.bankNumberParamName)));
 }

@@ -32,27 +32,27 @@ public class DefaultLoanScheduleGeneratorFactory implements LoanScheduleGenerato
         switch (interestMethod) {
             case FLAT:
                 loanScheduleGenerator = new FlatInterestLoanScheduleGenerator();
-                break;
+            break;
             case DECLINING_BALANCE:
                 loanScheduleGenerator = new DecliningBalanceInterestLoanScheduleGenerator();
-                break;
+            break;
             case AMORTIZATION:
-            	 loanScheduleGenerator = new DecliningBalanceInterestLoanScheduleGenerator();
-            	break;
+                loanScheduleGenerator = new DecliningBalanceInterestLoanScheduleGenerator();
+            break;
             case SEMI_BALOON:
-            	 loanScheduleGenerator = new SimiBalloonBalanceInterestLoanScheduleGenerator();
-            	break;
+                loanScheduleGenerator = new SimiBalloonBalanceInterestLoanScheduleGenerator();
+            break;
             case BALLOON:
                 // treat these interest methods as declining balance for schedule generation
                 loanScheduleGenerator = new DecliningBalanceInterestLoanScheduleGenerator();
-                break;
+            break;
             case AMORTIZATION_FEE:
-            	 loanScheduleGenerator = new DecliningBalanceInterestLoanScheduleGenerator();
-            	break;
+                loanScheduleGenerator = new DecliningBalanceInterestLoanScheduleGenerator();
+            break;
             case INVALID:
-                break;
+            break;
             // default:
-            //     throw new IllegalArgumentException("Unsupported interest method: " + interestMethod);
+            // throw new IllegalArgumentException("Unsupported interest method: " + interestMethod);
         }
 
         return loanScheduleGenerator;

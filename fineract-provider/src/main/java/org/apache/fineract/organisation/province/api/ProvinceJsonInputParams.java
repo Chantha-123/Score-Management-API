@@ -23,12 +23,7 @@ import java.util.Set;
 
 public enum ProvinceJsonInputParams {
 
-    ID("id"),
-    CODE("code"),
-    NAME_KHM("nameKhm"),
-    NAME_ENG("nameEng"),
-    LOCALE("locale"),
-    DATE_FORMAT("dateFormat");
+    ID("id"), CODE("code"), NAME_KHM("nameKhm"), NAME_ENG("nameEng"), LOCALE("locale"), DATE_FORMAT("dateFormat");
 
     private final String value;
 

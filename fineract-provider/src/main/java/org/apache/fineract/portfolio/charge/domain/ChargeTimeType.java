@@ -37,7 +37,8 @@ public enum ChargeTimeType {
     SHAREACCOUNT_ACTIVATION(13, "chargeTimeType.activation"), // only for loan
     SHARE_PURCHASE(14, "chargeTimeType.sharespurchase"), SHARE_REDEEM(15, "chargeTimeType.sharesredeem"),
 
-    SAVINGS_NOACTIVITY_FEE(16, "chargeTimeType.savingsNoActivityFee");
+    SAVINGS_NOACTIVITY_FEE(16, "chargeTimeType.savingsNoActivityFee"), //
+    ON_DEMAND(17, "chargeTimeType.onDemand"); // only for loan charges, applied and collected by user action
 
     private final Integer value;
     private final String code;
@@ -58,7 +59,7 @@ public enum ChargeTimeType {
     public static Object[] validLoanValues() {
         return new Integer[] { ChargeTimeType.DISBURSEMENT.getValue(), ChargeTimeType.SPECIFIED_DUE_DATE.getValue(),
                 ChargeTimeType.INSTALMENT_FEE.getValue(), ChargeTimeType.OVERDUE_INSTALLMENT.getValue(),
-                ChargeTimeType.TRANCHE_DISBURSEMENT.getValue() };
+                ChargeTimeType.TRANCHE_DISBURSEMENT.getValue(), ChargeTimeType.ON_DEMAND.getValue() };
     }
 
     public static Object[] validLoanChargeValues() {
@@ -134,6 +135,9 @@ public enum ChargeTimeType {
                 case 16:
                     chargeTimeType = SAVINGS_NOACTIVITY_FEE;
                 break;
+                case 17:
+                    chargeTimeType = ON_DEMAND;
+                break;
                 default:
                     chargeTimeType = INVALID;
                 break;
@@ -187,7 +191,8 @@ public enum ChargeTimeType {
     }
 
     public boolean isAllowedLoanChargeTime() {
-        return isTimeOfDisbursement() || isOnSpecifiedDueDate() || isInstalmentFee() || isOverdueInstallment() || isTrancheDisbursement();
+        return isTimeOfDisbursement() || isOnSpecifiedDueDate() || isInstalmentFee() || isOverdueInstallment() || isTrancheDisbursement()
+                || isOnDemand();
     }
 
     public boolean isAllowedClientChargeTime() {
@@ -217,5 +222,9 @@ public enum ChargeTimeType {
 
     public boolean isSharesRedeem() {
         return this.value.equals(ChargeTimeType.SHARE_REDEEM.getValue());
+    }
+
+    public boolean isOnDemand() {
+        return this.value.equals(ChargeTimeType.ON_DEMAND.getValue());
     }
 }

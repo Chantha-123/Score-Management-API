@@ -29,8 +29,8 @@ public class CommuneData implements Serializable {
     private final String nameKhm;
     private final String nameEng;
 
-    public CommuneData(final Long id, final Long districtId, final String districtNameEng, final String code,
-            final String nameKhm, final String nameEng) {
+    public CommuneData(final Long id, final Long districtId, final String districtNameEng, final String code, final String nameKhm,
+            final String nameEng) {
         this.id = id;
         this.districtId = districtId;
         this.districtNameEng = districtNameEng;

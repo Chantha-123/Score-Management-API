@@ -450,25 +450,22 @@ public class LoanScheduleAssembler {
                 .isInterestToBeRecoveredFirstWhenGreaterThanEMI();
         final boolean isPrincipalCompoundingDisabledForOverdueLoans = this.configurationDomainService
                 .isPrincipalCompoundingDisabledForOverdueLoans();
-         LoanApplicationTerms loanApplicationTerms = 
-        		LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
-                repaymentEvery, repaymentPeriodFrequencyType, nthDay, weekDayType, amortizationMethod, interestMethod,
-                interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
-                allowPartialPeriodInterestCalcualtion, principalMoney, expectedDisbursementDate, repaymentsStartingFromDate,
-                calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment, recurringMoratoriumOnPrincipalPeriods,
-                graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsToleranceMoney,
-                loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance, graceOnArrearsAgeing,
-                daysInMonthType, daysInYearType, isInterestRecalculationEnabled, recalculationFrequencyType, restCalendarInstance,
-                compoundingMethod, compoundingCalendarInstance, compoundingFrequencyType, principalThresholdForLastInstalment,
-                installmentAmountInMultiplesOf, loanProduct.preCloseInterestCalculationStrategy(), calendar, BigDecimal.ZERO,
-                loanTermVariations, isInterestChargedFromDateSameAsDisbursalDateEnabled, numberOfDays, isSkipMeetingOnFirstDay, detailDTO,
-                allowCompoundingOnEod, isEqualAmortization, isInterestToBeRecoveredFirstWhenGreaterThanEMI,
-                fixedPrincipalPercentagePerInstallment, isPrincipalCompoundingDisabledForOverdueLoans,simiGraceOnPrincipalPayment);
-         
-         
-       
-         
-         return loanApplicationTerms;
+        LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency,
+                loanTermPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentPeriodFrequencyType, nthDay, weekDayType,
+                amortizationMethod, interestMethod, interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate,
+                interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, principalMoney, expectedDisbursementDate,
+                repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment,
+                recurringMoratoriumOnPrincipalPeriods, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate,
+                inArrearsToleranceMoney, loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance,
+                graceOnArrearsAgeing, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, recalculationFrequencyType,
+                restCalendarInstance, compoundingMethod, compoundingCalendarInstance, compoundingFrequencyType,
+                principalThresholdForLastInstalment, installmentAmountInMultiplesOf, loanProduct.preCloseInterestCalculationStrategy(),
+                calendar, BigDecimal.ZERO, loanTermVariations, isInterestChargedFromDateSameAsDisbursalDateEnabled, numberOfDays,
+                isSkipMeetingOnFirstDay, detailDTO, allowCompoundingOnEod, isEqualAmortization,
+                isInterestToBeRecoveredFirstWhenGreaterThanEMI, fixedPrincipalPercentagePerInstallment,
+                isPrincipalCompoundingDisabledForOverdueLoans, simiGraceOnPrincipalPayment);
+
+        return loanApplicationTerms;
     }
 
     private CalendarInstance createCalendarForSameAsRepayment(final Integer repaymentEvery,
@@ -610,28 +607,24 @@ public class LoanScheduleAssembler {
         // This method is getting called from calculate loan schedule.
         final LoanApplicationTerms loanApplicationTerms = assembleLoanTerms(element);
         // Get holiday details
-    	final Integer interestType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("interestType", element);
+        final Integer interestType = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("interestType", element);
         final InterestMethod interestMethod = InterestMethod.fromInt(interestType);
-        if(interestMethod.isAnunityFee())
-		{
-			List<LoanDisbursementDetails> disbursementDetails = null;
-			final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element, disbursementDetails);
-			
-			BigDecimal chargeRate = BigDecimal.ZERO;
-			
-			for (final LoanCharge loanCharge : loanCharges)
-			{
-				if(loanCharge.getChargeCalculation().isPercentageOfOutstandingAmount() && loanCharge.isInstalmentFee()
-						&& !loanCharge.isPenaltyCharge())
-				{
-					chargeRate = loanCharge.getPercentage();
-				}
-			}
-			loanApplicationTerms.setAnnulaNorminalChargeRate(chargeRate);
-		
-		
-		}
-        
+        if (interestMethod.isAnunityFee()) {
+            List<LoanDisbursementDetails> disbursementDetails = null;
+            final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element, disbursementDetails);
+
+            BigDecimal chargeRate = BigDecimal.ZERO;
+
+            for (final LoanCharge loanCharge : loanCharges) {
+                if (loanCharge.getChargeCalculation().isPercentageOfOutstandingAmount() && loanCharge.isInstalmentFee()
+                        && !loanCharge.isPenaltyCharge()) {
+                    chargeRate = loanCharge.getPercentage();
+                }
+            }
+            loanApplicationTerms.setAnnulaNorminalChargeRate(chargeRate);
+
+        }
+
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
 
         final Long clientId = this.fromApiJsonHelper.extractLongNamed("clientId", element);
@@ -664,34 +657,32 @@ public class LoanScheduleAssembler {
     public LoanScheduleModel assembleLoanScheduleFrom(final LoanApplicationTerms loanApplicationTerms, final boolean isHolidayEnabled,
             final List<Holiday> holidays, final WorkingDays workingDays, final JsonElement element,
             List<LoanDisbursementDetails> disbursementDetails) {
-    	final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element, disbursementDetails);
+        final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element, disbursementDetails);
 
-		final RoundingMode roundingMode = MoneyHelper.getRoundingMode();
-		final MathContext mc = new MathContext(8, roundingMode);
-		HolidayDetailDTO detailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
+        final RoundingMode roundingMode = MoneyHelper.getRoundingMode();
+        final MathContext mc = new MathContext(8, roundingMode);
+        HolidayDetailDTO detailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
 
-		LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
-		
-		if (loanApplicationTerms.isEqualAmortization())
-		{
-			if (loanApplicationTerms.getInterestMethod().isDecliningBalnce() || loanApplicationTerms.getInterestMethod().isAnunityFee())
-			{
-				final LoanScheduleGenerator decliningLoanScheduleGenerator = this.loanScheduleFactory.create(InterestMethod.DECLINING_BALANCE);
-				
-				LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
+        LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
 
-				loanApplicationTerms.updateTotalInterestDue( Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
-				
-			}
-			else {
-				loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
-			}
-		} else
-		{
-			loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
-		}
+        if (loanApplicationTerms.isEqualAmortization()) {
+            if (loanApplicationTerms.getInterestMethod().isDecliningBalnce() || loanApplicationTerms.getInterestMethod().isAnunityFee()) {
+                final LoanScheduleGenerator decliningLoanScheduleGenerator = this.loanScheduleFactory
+                        .create(InterestMethod.DECLINING_BALANCE);
 
-		return loanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
+                LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
+
+                loanApplicationTerms
+                        .updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
+
+            } else {
+                loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
+            }
+        } else {
+            loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getInterestMethod());
+        }
+
+        return loanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
     }
 
     public LoanScheduleModel assembleForInterestRecalculation(final LoanApplicationTerms loanApplicationTerms, final Long officeId,

@@ -2099,8 +2099,8 @@ public final class LoanProductDataValidator {
     private void validateEarlyPayoffCharge(final DataValidatorBuilder baseDataValidator, final JsonElement element) {
         Integer earlyPayoffChargeCalculationTypeValue = null;
         if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME, element)) {
-            earlyPayoffChargeCalculationTypeValue = this.fromApiJsonHelper
-                    .extractIntegerNamed(LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME, element, Locale.getDefault());
+            earlyPayoffChargeCalculationTypeValue = this.fromApiJsonHelper.extractIntegerNamed(
+                    LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME, element, Locale.getDefault());
             baseDataValidator.reset().parameter(LoanProductConstants.EARLY_PAYOFF_CHARGE_CALCULATION_TYPE_PARAM_NAME)
                     .value(earlyPayoffChargeCalculationTypeValue).ignoreIfNull().inMinMaxRange(1, 2);
         }

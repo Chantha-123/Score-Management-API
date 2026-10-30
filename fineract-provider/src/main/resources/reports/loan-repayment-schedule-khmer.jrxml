@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<!-- Stretchy report "Loan Repayment Schedule Khmer" (report_type = Jasper). Run with R_loanId=<m_loan.id>.
+     Printable Khmer repayment schedule (layout ITD-0002 "DECLINE METHOD SCHEDULE"), printed from the loan account's
+     Repayment Schedule tab. The paid and signature columns are left blank to be filled in by hand at each payment. -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="loan-repayment-schedule-khmer" pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="24" bottomMargin="24" whenNoDataType="NoDataSection">
+
+    <!-- OpenPDF does not shape complex scripts; lay out Khmer runs with Java's text engine so coeng subscripts and vowels render correctly -->
+    <property name="net.sf.jasperreports.export.pdf.glyph.renderer.blocks" value="khmer"/>
+
+    <style name="Base" isDefault="true" fontName="Battambang" fontSize="8"/>
+    <style name="Head" style="Base" isBold="true" hTextAlign="Center" vTextAlign="Middle">
+        <box><pen lineWidth="0.75"/></box>
+    </style>
+    <style name="Cell" style="Base" vTextAlign="Middle">
+        <box leftPadding="3" rightPadding="3"><pen lineWidth="0.75"/></box>
+    </style>
+    <!-- Every fourth installment is highlighted, matching the paper form (the loan must be paid off every 4 months) -->
+    <style name="Row" style="Cell">
+        <conditionalStyle>
+            <conditionExpression><![CDATA[Boolean.valueOf($F{installment}.intValue() % 4 == 0)]]></conditionExpression>
+            <style mode="Opaque" backcolor="#D9E1F2" isBold="true"/>
+        </conditionalStyle>
+    </style>
+    <!-- Text inside an amount cell: the cell frame draws the border -->
+    <style name="RowText" style="Base" vTextAlign="Middle">
+        <conditionalStyle>
+            <conditionExpression><![CDATA[Boolean.valueOf($F{installment}.intValue() % 4 == 0)]]></conditionExpression>
+            <style isBold="true"/>
+        </conditionalStyle>
+    </style>
+
+    <parameter name="loanId" class="java.lang.Long"/>
+    <parameter name="currentUserHierarchy" class="java.lang.String"/>
+
+    <queryString>
+        <![CDATA[
+SELECT rs.installment,
+       rs.fromdate,
+       rs.duedate,
+       COALESCE(rs.principal_amount, 0) AS principal,
+       COALESCE(rs.interest_amount, 0) AS interest,
+       COALESCE(rs.fee_charges_amount, 0) + COALESCE(rs.penalty_charges_amount, 0) AS fee,
+       COALESCE(NULLIF(l.principal_disbursed_derived, 0), l.principal_amount) AS loan_principal,
+       COALESCE(l.disbursedon_date, l.expected_disbursedon_date) AS disbursement_date,
+       l.account_no AS loan_account_no,
+       l.currency_digits,
+       l.nominal_interest_rate_per_period AS interest_rate,
+       l.term_frequency,
+       -- Khmer unit for PeriodFrequencyType: 0 days, 1 weeks, 2 months, 3 years
+       CASE l.interest_period_frequency_enum
+           WHEN 0 THEN 'ថ្ងៃ'
+           WHEN 1 THEN 'សប្តាហ៍'
+           WHEN 3 THEN 'ឆ្នាំ'
+           ELSE 'ខែ'
+       END AS interest_period_name,
+       CASE l.term_period_frequency_enum
+           WHEN 0 THEN 'ថ្ងៃ'
+           WHEN 1 THEN 'សប្តាហ៍'
+           WHEN 3 THEN 'ឆ្នាំ'
+           ELSE 'ខែ'
+       END AS term_period_name,
+       CASE l.amortization_method_enum
+           WHEN 0 THEN 'រំលស់ប្រាក់ដើម'
+           WHEN 1 THEN 'រំលស់ថេរ'
+           ELSE ''
+       END AS repayment_method,
+       CASE l.currency_code
+           WHEN 'USD' THEN 'ដុល្លារ'
+           WHEN 'KHR' THEN 'រៀល'
+           WHEN 'THB' THEN 'បាត'
+           ELSE l.currency_code
+       END AS currency_name,
+       CASE l.currency_code
+           WHEN 'KHR' THEN '៛'
+           ELSE COALESCE(cur.display_symbol, l.currency_code)
+       END AS currency_symbol,
+       (SELECT SUM(lc.charge_amount_or_percentage)
+          FROM m_loan_charge lc
+         WHERE lc.loan_id = l.id
+           AND lc.is_active = TRUE
+           AND lc.charge_time_enum = 8
+           AND lc.charge_calculation_enum <> 1) AS fee_rate,
+       c.account_no AS client_account_no,
+       c.display_name AS client_name,
+       CONCAT_WS(' ', v.name_khm, cm.name_khm, d.name_khm, p.name_khm) AS address
+FROM m_loan_repayment_schedule rs
+JOIN m_loan l ON l.id = rs.loan_id
+JOIN m_client c ON c.id = l.client_id
+JOIN m_office o ON o.id = c.office_id
+LEFT JOIN m_currency cur ON cur.code = l.currency_code
+LEFT JOIN m_village v ON v.id = c.village_id
+LEFT JOIN m_commune cm ON cm.id = v.commune_id
+LEFT JOIN m_district d ON d.id = cm.district_id
+LEFT JOIN m_province p ON p.id = d.province_id
+WHERE rs.loan_id = $P{loanId}
+  AND o.hierarchy LIKE CONCAT($P{currentUserHierarchy}, '%')
+ORDER BY rs.installment
+        ]]>
+    </queryString>
+
+    <field name="installment" class="java.lang.Integer"/>
+    <field name="fromdate" class="java.util.Date"/>
+    <field name="duedate" class="java.util.Date"/>
+    <field name="principal" class="java.math.BigDecimal"/>
+    <field name="interest" class="java.math.BigDecimal"/>
+    <field name="fee" class="java.math.BigDecimal"/>
+    <field name="loan_principal" class="java.math.BigDecimal"/>
+    <field name="disbursement_date" class="java.util.Date"/>
+    <field name="loan_account_no" class="java.lang.String"/>
+    <field name="currency_digits" class="java.lang.Integer"/>
+    <field name="interest_rate" class="java.math.BigDecimal"/>
+    <field name="term_frequency" class="java.lang.Integer"/>
+    <field name="interest_period_name" class="java.lang.String"/>
+    <field name="term_period_name" class="java.lang.String"/>
+    <field name="repayment_method" class="java.lang.String"/>
+    <field name="currency_name" class="java.lang.String"/>
+    <field name="currency_symbol" class="java.lang.String"/>
+    <field name="fee_rate" class="java.math.BigDecimal"/>
+    <field name="client_account_no" class="java.lang.String"/>
+    <field name="client_name" class="java.lang.String"/>
+    <field name="address" class="java.lang.String"/>
+
+    <variable name="amountFormat" class="java.text.DecimalFormat">
+        <variableExpression><![CDATA[new java.text.DecimalFormat($F{currency_digits} == null || $F{currency_digits}.intValue() > 0 ? "#,##0.00" : "#,##0")]]></variableExpression>
+    </variable>
+    <variable name="cumulativePrincipal" class="java.math.BigDecimal" calculation="Sum">
+        <variableExpression><![CDATA[$F{principal}]]></variableExpression>
+    </variable>
+
+    <title>
+        <band height="80">
+            <!-- Column 1 -->
+            <staticText><reportElement x="0" y="0" width="80" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[លេខអតិថិជន]]></text></staticText>
+            <staticText><reportElement x="80" y="0" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="92" y="0" width="113" height="20"/><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{client_account_no}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="20" width="80" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[ឈ្មោះអតិថិជន]]></text></staticText>
+            <staticText><reportElement x="80" y="20" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="92" y="20" width="113" height="20"/><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{client_name}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="40" width="80" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[លេខគណនី]]></text></staticText>
+            <staticText><reportElement x="80" y="40" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="92" y="40" width="113" height="20"/><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{loan_account_no}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="0" y="60" width="80" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[អាសយដ្ឋាន]]></text></staticText>
+            <staticText><reportElement x="80" y="60" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true" textAdjust="ScaleFont"><reportElement x="92" y="60" width="300" height="20"/><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{address}]]></textFieldExpression></textField>
+
+            <!-- Column 2 -->
+            <staticText><reportElement x="210" y="0" width="72" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[ថ្ងៃទទួលប្រាក់]]></text></staticText>
+            <staticText><reportElement x="282" y="0" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true" pattern="dd-MM-yyyy"><reportElement x="292" y="0" width="100" height="20"/><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{disbursement_date}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="210" y="20" width="72" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[របៀបសង]]></text></staticText>
+            <staticText><reportElement x="282" y="20" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="292" y="20" width="100" height="20"/><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{repayment_method}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="210" y="40" width="72" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[អត្រាសេវា]]></text></staticText>
+            <staticText><reportElement x="282" y="40" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="292" y="40" width="100" height="20"/><textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{fee_rate} == null ? "-" : new java.text.DecimalFormat("0.00").format($F{fee_rate}) + "% ប្រចាំ" + $F{interest_period_name}]]></textFieldExpression>
+            </textField>
+
+            <!-- Column 3 -->
+            <staticText><reportElement x="398" y="0" width="82" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[រូបិយប័ណ្ណ]]></text></staticText>
+            <staticText><reportElement x="480" y="0" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="490" y="0" width="65" height="20"/><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA["ប្រាក់" + $F{currency_name}]]></textFieldExpression></textField>
+
+            <staticText><reportElement x="398" y="20" width="82" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[ចំនួនទឹកប្រាក់ខ្ចី]]></text></staticText>
+            <staticText><reportElement x="480" y="20" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="490" y="20" width="65" height="20"/><textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.##").format($F{loan_principal}) + " " + $F{currency_name}]]></textFieldExpression>
+            </textField>
+
+            <staticText><reportElement x="398" y="40" width="82" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[អត្រាការប្រាក់]]></text></staticText>
+            <staticText><reportElement x="480" y="40" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="490" y="40" width="65" height="20"/><textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{interest_rate} == null ? "" : new java.text.DecimalFormat("0.##").format($F{interest_rate}) + "% ប្រចាំ" + $F{interest_period_name}]]></textFieldExpression>
+            </textField>
+
+            <staticText><reportElement x="398" y="60" width="82" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[រយៈពេលខ្ចី]]></text></staticText>
+            <staticText><reportElement x="480" y="60" width="10" height="20"/><textElement verticalAlignment="Middle"/><text><![CDATA[:]]></text></staticText>
+            <textField isBlankWhenNull="true"><reportElement x="490" y="60" width="65" height="20"/><textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{term_frequency} == null ? "" : $F{term_frequency} + " " + $F{term_period_name}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <!-- Table header, repeated on every page. Widths: 22 52 32 | 50 46 46 56 | 60 70 | 60 61 = 555 -->
+    <columnHeader>
+        <band height="48">
+            <staticText><reportElement style="Head" x="0" y="8" width="22" height="40"/><text><![CDATA[ល.រ]]></text></staticText>
+            <staticText><reportElement style="Head" x="22" y="8" width="52" height="40"/><text><![CDATA[កាលបរិច្ចេទ]]></text></staticText>
+            <staticText><reportElement style="Head" x="74" y="8" width="32" height="40"/><text><![CDATA[ចំនួនថ្ងៃ]]></text></staticText>
+            <staticText><reportElement style="Head" x="106" y="8" width="198" height="20"/><text><![CDATA[ប្រាក់ដើមនៅជំពាក់]]></text></staticText>
+            <staticText><reportElement style="Head" x="106" y="28" width="50" height="20"/><text><![CDATA[ប្រាក់ដើម]]></text></staticText>
+            <staticText><reportElement style="Head" x="156" y="28" width="46" height="20"/><text><![CDATA[ការប្រាក់]]></text></staticText>
+            <staticText><reportElement style="Head" x="202" y="28" width="46" height="20"/><text><![CDATA[ប្រាក់សេវា]]></text></staticText>
+            <staticText><reportElement style="Head" x="248" y="28" width="56" height="20"/><text><![CDATA[សរុប]]></text></staticText>
+            <staticText><reportElement style="Head" x="304" y="8" width="60" height="40"/><text><![CDATA[ប្រាក់បានបង់]]></text></staticText>
+            <staticText><reportElement style="Head" x="364" y="8" width="70" height="40"/><text><![CDATA[ប្រាក់ដើមនៅជំពាក់]]></text></staticText>
+            <staticText><reportElement style="Head" x="434" y="8" width="121" height="20"/><text><![CDATA[ហត្ថលេខា]]></text></staticText>
+            <staticText><reportElement style="Head" x="434" y="28" width="60" height="20"/><text><![CDATA[បេឡា]]></text></staticText>
+            <staticText><reportElement style="Head" x="494" y="28" width="61" height="20"/><text><![CDATA[ផ្សេង]]></text></staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="20">
+            <textField><reportElement style="Row" x="0" y="0" width="22" height="20"/><textElement textAlignment="Center"/><textFieldExpression><![CDATA[$F{installment}]]></textFieldExpression></textField>
+            <textField pattern="dd-MM-yyyy"><reportElement style="Row" x="22" y="0" width="52" height="20"/><textElement textAlignment="Center"/><textFieldExpression><![CDATA[$F{duedate}]]></textFieldExpression></textField>
+            <!-- Both dates are read in the same zone, so the shift cancels out; round for DST -->
+            <textField isBlankWhenNull="true"><reportElement style="Row" x="74" y="0" width="32" height="20"/><textElement textAlignment="Center"/>
+                <textFieldExpression><![CDATA[$F{fromdate} == null ? null : Long.valueOf(Math.round(($F{duedate}.getTime() - $F{fromdate}.getTime()) / 86400000d))]]></textFieldExpression>
+            </textField>
+
+            <frame><reportElement style="Row" x="106" y="0" width="50" height="20"/>
+                <textField><reportElement style="RowText" x="0" y="0" width="12" height="20"/><textFieldExpression><![CDATA[$F{currency_symbol}]]></textFieldExpression></textField>
+                <textField><reportElement style="RowText" x="9" y="0" width="35" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA[$V{amountFormat}.format($F{principal})]]></textFieldExpression></textField>
+            </frame>
+            <frame><reportElement style="Row" x="156" y="0" width="46" height="20"/>
+                <textField><reportElement style="RowText" x="0" y="0" width="12" height="20"/><textFieldExpression><![CDATA[$F{currency_symbol}]]></textFieldExpression></textField>
+                <textField><reportElement style="RowText" x="9" y="0" width="31" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA[$V{amountFormat}.format($F{interest})]]></textFieldExpression></textField>
+            </frame>
+            <frame><reportElement style="Row" x="202" y="0" width="46" height="20"/>
+                <textField><reportElement style="RowText" x="0" y="0" width="12" height="20"/><textFieldExpression><![CDATA[$F{currency_symbol}]]></textFieldExpression></textField>
+                <textField><reportElement style="RowText" x="9" y="0" width="31" height="20"/><textElement textAlignment="Right"/><textFieldExpression><![CDATA[$V{amountFormat}.format($F{fee})]]></textFieldExpression></textField>
+            </frame>
+            <frame><reportElement style="Row" x="248" y="0" width="56" height="20"/>
+                <textField><reportElement style="RowText" x="0" y="0" width="12" height="20"/><textElement><font isBold="true"/></textElement><textFieldExpression><![CDATA[$F{currency_symbol}]]></textFieldExpression></textField>
+                <textField><reportElement style="RowText" x="9" y="0" width="41" height="20"/><textElement textAlignment="Right"><font isBold="true"/></textElement><textFieldExpression><![CDATA[$V{amountFormat}.format($F{principal}.add($F{interest}).add($F{fee}))]]></textFieldExpression></textField>
+            </frame>
+
+            <staticText><reportElement style="Row" x="304" y="0" width="60" height="20"/><text><![CDATA[]]></text></staticText>
+
+            <!-- Principal still owed before this installment is paid -->
+            <frame><reportElement style="Row" x="364" y="0" width="70" height="20"/>
+                <textField><reportElement style="RowText" x="0" y="0" width="12" height="20"/><textElement><font isBold="true"/></textElement><textFieldExpression><![CDATA[$F{currency_symbol}]]></textFieldExpression></textField>
+                <textField><reportElement style="RowText" x="9" y="0" width="55" height="20"/><textElement textAlignment="Right"><font isBold="true"/></textElement><textFieldExpression><![CDATA[$V{amountFormat}.format($F{loan_principal}.subtract($V{cumulativePrincipal}).add($F{principal}))]]></textFieldExpression></textField>
+            </frame>
+
+            <staticText><reportElement style="Row" x="434" y="0" width="60" height="20"/><text><![CDATA[]]></text></staticText>
+            <staticText><reportElement style="Row" x="494" y="0" width="61" height="20"/><text><![CDATA[]]></text></staticText>
+        </band>
+    </detail>
+
+    <summary>
+        <band height="250">
+            <staticText><reportElement x="20" y="14" width="200" height="22"/><textElement><font size="9" isBold="true"/></textElement><text><![CDATA[ហត្ថលេខាគណនេយ្យករ]]></text></staticText>
+            <staticText><reportElement x="340" y="14" width="200" height="22"/><textElement textAlignment="Center"><font size="9" isBold="true"/></textElement><text><![CDATA[ស្នាមមេដៃអ្នកទទួល]]></text></staticText>
+
+            <textField isBlankWhenNull="true"><reportElement x="340" y="100" width="200" height="20"/><textElement textAlignment="Center"/><textFieldExpression><![CDATA[$F{client_name}]]></textFieldExpression></textField>
+            <staticText><reportElement x="250" y="122" width="305" height="20"/><textElement textAlignment="Right"/><text><![CDATA[បានទទួលប្រាក់គ្រប់ចំនួន និង ឯកភាពបង់តាមកាលវិភាគសងប្រាក់]]></text></staticText>
+
+            <staticText><reportElement x="20" y="144" width="80" height="20"/><textElement><font size="9" isBold="true"/></textElement><text><![CDATA[កំណត់សម្គាល់ :]]></text></staticText>
+            <staticText><reportElement x="100" y="164" width="455" height="20"/><text><![CDATA[1. អតិថិជនត្រូវសងប្រាក់ឱ្យបានទៀងទាត់តាមកាលវិភាគសងប្រាក់ដែលបានកំណត់ទុក ដែលមានរយៈពេលពេល៤ខែត្រូវបង់ផ្តាច់មកហាងបញ្ចាំ វិញជាកំណត់។]]></text></staticText>
+            <staticText><reportElement x="100" y="184" width="455" height="40"/><textElement markup="html"/>
+                <text><![CDATA[2. បើអតិថិជនគ្មានលទ្ធភាពបង់ផ្តាច់ប្រាក់ដើមនៅជំពាក់បានទេ ភាគីអតិថិជនមានសិទ្ធបន្តកិច្ចសន្យាប្រាក់កម្ចីទៀតបានដោយមានការឯកសារភាពពីភាគី <b>ហាងបញ្ចាំ។</b> ក្នុងករណីបន្តកិច្ចសន្យា ត្រូវគិតថ្លៃសេវារៀបចំចំនួន <b><font color="#FF0000">២%</font></b> នៃចំនួនប្រាក់ដើមដែលនៅជំពាក់។]]></text>
+            </staticText>
+            <staticText><reportElement x="100" y="224" width="455" height="20"/><text><![CDATA[3. ការទូទាត់រួច លុះត្រាមានហត្ថលេខា ត្រាបេឡាសម្គាល់ និងមានបង្កាន់ដៃបង់ប្រាក់។]]></text></staticText>
+        </band>
+    </summary>
+
+    <noData>
+        <band height="40">
+            <staticText><reportElement x="0" y="0" width="555" height="40"/><textElement textAlignment="Center" verticalAlignment="Middle"><font size="11"/></textElement>
+                <text><![CDATA[រកមិនឃើញកាលវិភាគសងប្រាក់សម្រាប់ប្រាក់កម្ចីនេះទេ]]></text>
+            </staticText>
+        </band>
+    </noData>
+</jasperReport>

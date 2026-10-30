@@ -93,7 +93,8 @@ public class CommuneWritePlatformServiceJpaRepositoryImpl implements CommuneWrit
                 this.communeRepository.saveAndFlush(commune);
             }
 
-            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(communeId).with(changesOnly).build();
+            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withEntityId(communeId).with(changesOnly)
+                    .build();
         } catch (final JpaSystemException | DataIntegrityViolationException dve) {
             final Throwable throwable = dve.getMostSpecificCause();
             handleDataIntegrityIssues(throwable, dve);

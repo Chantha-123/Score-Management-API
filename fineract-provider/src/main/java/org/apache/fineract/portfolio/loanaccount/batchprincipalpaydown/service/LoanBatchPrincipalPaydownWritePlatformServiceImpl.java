@@ -193,8 +193,7 @@ public class LoanBatchPrincipalPaydownWritePlatformServiceImpl implements LoanBa
                 false, false, null, false);
 
         // 5. Link the new transaction to the archived schedule version, so an undo knows exactly what to restore.
-        this.auditRepository
-                .saveAndFlush(LoanBatchPrincipalPaydownAudit.instance(loan, loanTransaction, scheduleHistoryVersion));
+        this.auditRepository.saveAndFlush(LoanBatchPrincipalPaydownAudit.instance(loan, loanTransaction, scheduleHistoryVersion));
 
         return commandProcessingResultBuilder.withCommandId(command.commandId()).withLoanId(loanId).with(changes).build();
     }

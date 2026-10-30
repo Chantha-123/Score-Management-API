@@ -115,10 +115,10 @@ import org.apache.fineract.portfolio.loanaccount.exception.InvalidRefundDateExce
 import org.apache.fineract.portfolio.loanaccount.exception.LoanApplicationDateException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanDisbursalException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanForeclosureException;
-import org.apache.fineract.portfolio.loanaccount.exception.LoanPayoffException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerAssignmentDateException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanOfficerUnassignmentDateException;
+import org.apache.fineract.portfolio.loanaccount.exception.LoanPayoffException;
 import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementDataNotAllowedException;
 import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
 import org.apache.fineract.portfolio.loanaccount.exception.UndoLastTrancheDisbursementException;
@@ -131,8 +131,8 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanSchedul
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
-import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.EarlyPayoffChargeCalculationType;
+import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestRecalculationCompoundingMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
@@ -397,8 +397,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
 
     @Column(name = "fixed_principal_percentage_per_installment", scale = 2, precision = 5, nullable = true)
     private BigDecimal fixedPrincipalPercentagePerInstallment;
-    
-    
+
     @Column(name = "simi_principal_grace", nullable = true)
     private Integer simiPrincipalGrace;
 
@@ -920,6 +919,12 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
                     amount = getPrincpal().getAmount();
                 }
             break;
+            case PERCENT_OF_OUTSTANDING_AMOUNT:
+                // on-demand fee: base is the principal outstanding frozen when the fee was applied
+                if (!loanCharge.isInstalmentFee() && loanCharge.getAmountPercentageAppliedTo() != null) {
+                    amount = loanCharge.getAmountPercentageAppliedTo();
+                }
+            break;
             default:
             break;
         }
@@ -986,14 +991,12 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
             default:
             break;
         }
-        if(calculationType.isPercentageOfOutstandingAmount())
-        {
-        	amount = percentOf;
+        if (calculationType.isPercentageOfOutstandingAmount()) {
+            amount = percentOf;
+        } else {
+            amount = amount.plus(LoanCharge.percentageOf(percentOf.getAmount(), percentage));
         }
-        else {
-        	 amount = amount.plus(LoanCharge.percentageOf(percentOf.getAmount(), percentage));
-        }
-       
+
         return amount;
     }
 
@@ -1411,9 +1414,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
             actualChanges.put(externalIdParamName, newValue);
             this.externalId = StringUtils.defaultIfEmpty(newValue, null);
         }
-        
-        
-       
+
         // add clientId, groupId and loanType changes to actual changes
 
         final String clientIdParamName = "clientId";
@@ -1610,15 +1611,13 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(principalParamName);
             this.approvedPrincipal = newValue;
         }
-        
-        final String balloonPayment ="balloonPayment";
-        if(command.isChangeInIntegerParameterNamed(balloonPayment, this.simiPrincipalGrace))
-        {
-        	 final Integer newValue = command.integerValueOfParameterNamed(balloonPayment);
-             this.simiPrincipalGrace = newValue;
-             actualChanges.put(balloonPayment, newValue);
-        }
 
+        final String balloonPayment = "balloonPayment";
+        if (command.isChangeInIntegerParameterNamed(balloonPayment, this.simiPrincipalGrace)) {
+            final Integer newValue = command.integerValueOfParameterNamed(balloonPayment);
+            this.simiPrincipalGrace = newValue;
+            actualChanges.put(balloonPayment, newValue);
+        }
 
         if (command.isChangeInBigDecimalParameterNamed(principalParamName, this.proposedPrincipal)) {
             final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(principalParamName);
@@ -2809,32 +2808,28 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
 
             }
             loanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory().create(loanApplicationTerms.getInterestMethod());
-        } 
-    	if(loanApplicationTerms.getInterestMethod().isAnunityFee())
-		{
-			final LoanScheduleGenerator decliningLoanScheduleGenerator = scheduleGeneratorDTO
-					.getLoanScheduleFactory()
-					.create(InterestMethod.DECLINING_BALANCE);
-				Set<LoanCharge> loanCharges = charges();
-				BigDecimal chargePercent = BigDecimal.ZERO;
-				for(LoanCharge charge: loanCharges)
-				{
-					if(charge.getChargeCalculation().isPercentageOfOutstandingAmount() && charge.isInstalmentFee()
-							&& !charge.isPenaltyCharge())
-					{
-						chargePercent = charge.getPercentage();
-						loanApplicationTerms.setAnnulaNorminalChargeRate(chargePercent);
-					}
-					
-				}
-				
-				LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms,
-					loanCharges,
-					scheduleGeneratorDTO.getHolidayDetailDTO());
+        }
+        if (loanApplicationTerms.getInterestMethod().isAnunityFee()) {
+            final LoanScheduleGenerator decliningLoanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory()
+                    .create(InterestMethod.DECLINING_BALANCE);
+            Set<LoanCharge> loanCharges = charges();
+            BigDecimal chargePercent = BigDecimal.ZERO;
+            for (LoanCharge charge : loanCharges) {
+                if (charge.getChargeCalculation().isPercentageOfOutstandingAmount() && charge.isInstalmentFee()
+                        && !charge.isPenaltyCharge()) {
+                    chargePercent = charge.getPercentage();
+                    loanApplicationTerms.setAnnulaNorminalChargeRate(chargePercent);
+                }
 
-				loanApplicationTerms.updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
-		}
-        
+            }
+
+            LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges,
+                    scheduleGeneratorDTO.getHolidayDetailDTO());
+
+            loanApplicationTerms
+                    .updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
+        }
+
         else {
             loanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory().create(loanApplicationTerms.getInterestMethod());
         }
@@ -3171,6 +3166,25 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
             }
         }
         handleChargePaidTransaction(charge, paymentTransaction, loanLifecycleStateMachine, installmentNumber);
+    }
+
+    /**
+     * Reverses an on-demand fee: the charge payment, any apply-charge accrual booked for it, and the charge itself,
+     * then rebuilds installment fee totals. Caller must reprocess transactions afterwards.
+     */
+    public void reverseChargeFeeTransaction(final LoanTransaction chargePayment, final LoanCharge loanCharge) {
+        chargePayment.reverse();
+        chargePayment.manuallyAdjustedOrReversed();
+        for (final LoanTransaction transaction : this.loanTransactions) {
+            if (transaction.isAccrual() && transaction.isNotReversed() && transaction.getLoanChargesPaid().stream()
+                    .anyMatch(loanChargePaidBy -> loanCharge.equals(loanChargePaidBy.getLoanCharge()))) {
+                transaction.reverse();
+            }
+        }
+        loanCharge.setActive(false);
+
+        final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
+        wrapper.reprocess(getCurrency(), getDisbursementDate(), getRepaymentScheduleInstallments(), charges());
     }
 
     public void makeRefund(final LoanTransaction loanTransaction, final LoanLifecycleStateMachine loanLifecycleStateMachine,
@@ -5728,7 +5742,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
                 calendarHistoryDataWrapper, scheduleGeneratorDTO.getNumberOfdays(), scheduleGeneratorDTO.isSkipRepaymentOnFirstDayofMonth(),
                 holidayDetailDTO, allowCompoundingOnEod, scheduleGeneratorDTO.isFirstRepaymentDateAllowedOnHoliday(),
                 scheduleGeneratorDTO.isInterestToBeRecoveredFirstWhenGreaterThanEMI(), this.fixedPrincipalPercentagePerInstallment,
-                scheduleGeneratorDTO.isPrincipalCompoundingDisabledForOverdueLoans(),this.simiPrincipalGrace);
+                scheduleGeneratorDTO.isPrincipalCompoundingDisabledForOverdueLoans(), this.simiPrincipalGrace);
         return loanApplicationTerms;
     }
 
@@ -6004,7 +6018,7 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
                 compoundingCalendarInstance, compoundingFrequencyType, this.loanProduct.preCloseInterestCalculationStrategy(),
                 rescheduleStrategyMethod, loanCalendar, getApprovedPrincipal(), annualNominalInterestRate, loanTermVariations,
                 calendarHistoryDataWrapper, numberofdays, isSkipRepaymentonmonthFirst, holidayDetailDTO, allowCompoundingOnEod, false,
-                false, this.fixedPrincipalPercentagePerInstallment, false,this.simiPrincipalGrace);
+                false, this.fixedPrincipalPercentagePerInstallment, false, this.simiPrincipalGrace);
     }
 
     /**
@@ -6704,8 +6718,8 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
 
         if (calculationType.isPercentOfTotalPayoff()) {
             final MathContext mc = MoneyHelper.getMathContext();
-            final BigDecimal percentageAmount = payoffSubtotal.getAmount().multiply(configuredAmount, mc)
-                    .divide(BigDecimal.valueOf(100L), mc);
+            final BigDecimal percentageAmount = payoffSubtotal.getAmount().multiply(configuredAmount, mc).divide(BigDecimal.valueOf(100L),
+                    mc);
             return Money.of(currency, percentageAmount);
         }
 
@@ -6967,414 +6981,412 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         return Optional.ofNullable(this.charges).orElse(new HashSet<>());
     }
 
-	public int getVersion() {
-		return version;
-	}
-
-	public void setVersion(int version) {
-		this.version = version;
-	}
-
-	public String getExternalId() {
-		return externalId;
-	}
-
-	public void setExternalId(String externalId) {
-		this.externalId = externalId;
-	}
-
-	public Fund getFund() {
-		return fund;
-	}
-
-	public void setFund(Fund fund) {
-		this.fund = fund;
-	}
-
-	public CodeValue getLoanPurpose() {
-		return loanPurpose;
-	}
-
-	public void setLoanPurpose(CodeValue loanPurpose) {
-		this.loanPurpose = loanPurpose;
-	}
-
-	public LoanTransactionProcessingStrategy getTransactionProcessingStrategy() {
-		return transactionProcessingStrategy;
-	}
-
-	public void setTransactionProcessingStrategy(LoanTransactionProcessingStrategy transactionProcessingStrategy) {
-		this.transactionProcessingStrategy = transactionProcessingStrategy;
-	}
-
-	public Boolean getSyncDisbursementWithMeeting() {
-		return syncDisbursementWithMeeting;
-	}
-
-	public void setSyncDisbursementWithMeeting(Boolean syncDisbursementWithMeeting) {
-		this.syncDisbursementWithMeeting = syncDisbursementWithMeeting;
-	}
-
-	public LocalDate getRejectedOnDate() {
-		return rejectedOnDate;
-	}
-
-	public void setRejectedOnDate(LocalDate rejectedOnDate) {
-		this.rejectedOnDate = rejectedOnDate;
-	}
-
-	public AppUser getRejectedBy() {
-		return rejectedBy;
-	}
-
-	public void setRejectedBy(AppUser rejectedBy) {
-		this.rejectedBy = rejectedBy;
-	}
-
-	public LocalDate getWithdrawnOnDate() {
-		return withdrawnOnDate;
-	}
-
-	public void setWithdrawnOnDate(LocalDate withdrawnOnDate) {
-		this.withdrawnOnDate = withdrawnOnDate;
-	}
-
-	public AppUser getWithdrawnBy() {
-		return withdrawnBy;
-	}
-
-	public void setWithdrawnBy(AppUser withdrawnBy) {
-		this.withdrawnBy = withdrawnBy;
-	}
-
-	public AppUser getApprovedBy() {
-		return approvedBy;
-	}
-
-	public void setApprovedBy(AppUser approvedBy) {
-		this.approvedBy = approvedBy;
-	}
-
-	public LocalDate getExpectedDisbursementDate() {
-		return expectedDisbursementDate;
-	}
-
-	public void setExpectedDisbursementDate(LocalDate expectedDisbursementDate) {
-		this.expectedDisbursementDate = expectedDisbursementDate;
-	}
-
-	public AppUser getDisbursedBy() {
-		return disbursedBy;
-	}
-
-	public void setDisbursedBy(AppUser disbursedBy) {
-		this.disbursedBy = disbursedBy;
-	}
-
-	public AppUser getClosedBy() {
-		return closedBy;
-	}
-
-	public void setClosedBy(AppUser closedBy) {
-		this.closedBy = closedBy;
-	}
-
-	public LocalDate getWrittenOffOnDate() {
-		return writtenOffOnDate;
-	}
-
-	public void setWrittenOffOnDate(LocalDate writtenOffOnDate) {
-		this.writtenOffOnDate = writtenOffOnDate;
-	}
-
-	public LocalDate getRescheduledOnDate() {
-		return rescheduledOnDate;
-	}
-
-	public void setRescheduledOnDate(LocalDate rescheduledOnDate) {
-		this.rescheduledOnDate = rescheduledOnDate;
-	}
-
-	public AppUser getRescheduledByUser() {
-		return rescheduledByUser;
-	}
-
-	public void setRescheduledByUser(AppUser rescheduledByUser) {
-		this.rescheduledByUser = rescheduledByUser;
-	}
-
-	public LocalDate getActualMaturityDate() {
-		return actualMaturityDate;
-	}
-
-	public void setActualMaturityDate(LocalDate actualMaturityDate) {
-		this.actualMaturityDate = actualMaturityDate;
-	}
-
-	public Integer getLoanCounter() {
-		return loanCounter;
-	}
-
-	public void setLoanCounter(Integer loanCounter) {
-		this.loanCounter = loanCounter;
-	}
-
-	public Integer getLoanProductCounter() {
-		return loanProductCounter;
-	}
-
-	public void setLoanProductCounter(Integer loanProductCounter) {
-		this.loanProductCounter = loanProductCounter;
-	}
-
-	public Set<LoanTrancheCharge> getTrancheCharges() {
-		return trancheCharges;
-	}
-
-	public void setTrancheCharges(Set<LoanTrancheCharge> trancheCharges) {
-		this.trancheCharges = trancheCharges;
-	}
-
-	public Set<LoanOfficerAssignmentHistory> getLoanOfficerHistory() {
-		return loanOfficerHistory;
-	}
-
-	public void setLoanOfficerHistory(Set<LoanOfficerAssignmentHistory> loanOfficerHistory) {
-		this.loanOfficerHistory = loanOfficerHistory;
-	}
-
-	public LoanRepaymentScheduleTransactionProcessorFactory getTransactionProcessorFactory() {
-		return transactionProcessorFactory;
-	}
-
-	public void setTransactionProcessorFactory(
-			LoanRepaymentScheduleTransactionProcessorFactory transactionProcessorFactory) {
-		this.transactionProcessorFactory = transactionProcessorFactory;
-	}
-
-	public LoanLifecycleStateMachine getLoanLifecycleStateMachine() {
-		return loanLifecycleStateMachine;
-	}
-
-	public void setLoanLifecycleStateMachine(LoanLifecycleStateMachine loanLifecycleStateMachine) {
-		this.loanLifecycleStateMachine = loanLifecycleStateMachine;
-	}
-
-	public LoanSummaryWrapper getLoanSummaryWrapper() {
-		return loanSummaryWrapper;
-	}
-
-	public void setLoanSummaryWrapper(LoanSummaryWrapper loanSummaryWrapper) {
-		this.loanSummaryWrapper = loanSummaryWrapper;
-	}
-
-	public BigDecimal getTotalRecovered() {
-		return totalRecovered;
-	}
-
-	public void setTotalRecovered(BigDecimal totalRecovered) {
-		this.totalRecovered = totalRecovered;
-	}
-
-	public LoanInterestRecalculationDetails getLoanInterestRecalculationDetails() {
-		return loanInterestRecalculationDetails;
-	}
-
-	public void setLoanInterestRecalculationDetails(LoanInterestRecalculationDetails loanInterestRecalculationDetails) {
-		this.loanInterestRecalculationDetails = loanInterestRecalculationDetails;
-	}
-
-	public Boolean getCreateStandingInstructionAtDisbursement() {
-		return createStandingInstructionAtDisbursement;
-	}
-
-	public void setCreateStandingInstructionAtDisbursement(Boolean createStandingInstructionAtDisbursement) {
-		this.createStandingInstructionAtDisbursement = createStandingInstructionAtDisbursement;
-	}
-
-	public BigDecimal getGuaranteeAmountDerived() {
-		return guaranteeAmountDerived;
-	}
-
-	public void setGuaranteeAmountDerived(BigDecimal guaranteeAmountDerived) {
-		this.guaranteeAmountDerived = guaranteeAmountDerived;
-	}
-
-	public LocalDate getInterestRecalculatedOn() {
-		return interestRecalculatedOn;
-	}
-
-	public void setInterestRecalculatedOn(LocalDate interestRecalculatedOn) {
-		this.interestRecalculatedOn = interestRecalculatedOn;
-	}
-
-	public CodeValue getWriteOffReason() {
-		return writeOffReason;
-	}
-
-	public void setWriteOffReason(CodeValue writeOffReason) {
-		this.writeOffReason = writeOffReason;
-	}
-
-	public LoanTopupDetails getLoanTopupDetails() {
-		return loanTopupDetails;
-	}
-
-	public void setLoanTopupDetails(LoanTopupDetails loanTopupDetails) {
-		this.loanTopupDetails = loanTopupDetails;
-	}
-
-	public BigDecimal getFixedPrincipalPercentagePerInstallment() {
-		return fixedPrincipalPercentagePerInstallment;
-	}
-
-	public void setFixedPrincipalPercentagePerInstallment(BigDecimal fixedPrincipalPercentagePerInstallment) {
-		this.fixedPrincipalPercentagePerInstallment = fixedPrincipalPercentagePerInstallment;
-	}
-
-	public Integer getSimiPrincipalGrace() {
-		return simiPrincipalGrace;
-	}
-
-	public void setSimiPrincipalGrace(Integer simiPrincipalGrace) {
-		this.simiPrincipalGrace = simiPrincipalGrace;
-	}
-
-	public static Logger getLog() {
-		return LOG;
-	}
-
-	public Integer getLoanStatus() {
-		return loanStatus;
-	}
-
-	public LocalDate getActualDisbursementDate() {
-		return actualDisbursementDate;
-	}
-
-	public void setAccountNumber(String accountNumber) {
-		this.accountNumber = accountNumber;
-	}
-
-	public void setClient(Client client) {
-		this.client = client;
-	}
-
-	public void setGroup(Group group) {
-		this.group = group;
-	}
-
-	public void setLoanProduct(LoanProduct loanProduct) {
-		this.loanProduct = loanProduct;
-	}
-
-	public void setLoanOfficer(Staff loanOfficer) {
-		this.loanOfficer = loanOfficer;
-	}
-
-	public void setLoanRepaymentScheduleDetail(LoanProductRelatedDetail loanRepaymentScheduleDetail) {
-		this.loanRepaymentScheduleDetail = loanRepaymentScheduleDetail;
-	}
-
-	public void setTermFrequency(Integer termFrequency) {
-		this.termFrequency = termFrequency;
-	}
-
-	public void setTermPeriodFrequencyType(Integer termPeriodFrequencyType) {
-		this.termPeriodFrequencyType = termPeriodFrequencyType;
-	}
-
-	public void setSubmittedOnDate(LocalDate submittedOnDate) {
-		this.submittedOnDate = submittedOnDate;
-	}
-
-	public void setApprovedOnDate(LocalDate approvedOnDate) {
-		this.approvedOnDate = approvedOnDate;
-	}
-
-	public void setClosedOnDate(LocalDate closedOnDate) {
-		this.closedOnDate = closedOnDate;
-	}
-
-	public void setExpectedMaturityDate(LocalDate expectedMaturityDate) {
-		this.expectedMaturityDate = expectedMaturityDate;
-	}
-
-	public void setInterestChargedFromDate(LocalDate interestChargedFromDate) {
-		this.interestChargedFromDate = interestChargedFromDate;
-	}
-
-	public void setTotalOverpaid(BigDecimal totalOverpaid) {
-		this.totalOverpaid = totalOverpaid;
-	}
-
-	public void setCharges(Set<LoanCharge> charges) {
-		this.charges = charges;
-	}
-
-	public void setCollateral(Set<LoanCollateral> collateral) {
-		this.collateral = collateral;
-	}
-
-	public void setLoanCollateralManagements(Set<LoanCollateralManagement> loanCollateralManagements) {
-		this.loanCollateralManagements = loanCollateralManagements;
-	}
-
-	public void setRepaymentScheduleInstallments(List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments) {
-		this.repaymentScheduleInstallments = repaymentScheduleInstallments;
-	}
-
-	public void setLoanTransactions(List<LoanTransaction> loanTransactions) {
-		this.loanTransactions = loanTransactions;
-	}
-
-	public void setSummary(LoanSummary summary) {
-		this.summary = summary;
-	}
-
-	public void setProposedPrincipal(BigDecimal proposedPrincipal) {
-		this.proposedPrincipal = proposedPrincipal;
-	}
-
-	public void setApprovedPrincipal(BigDecimal approvedPrincipal) {
-		this.approvedPrincipal = approvedPrincipal;
-	}
-
-	public void setFixedEmiAmount(BigDecimal fixedEmiAmount) {
-		this.fixedEmiAmount = fixedEmiAmount;
-	}
-
-	public void setMaxOutstandingLoanBalance(BigDecimal maxOutstandingLoanBalance) {
-		this.maxOutstandingLoanBalance = maxOutstandingLoanBalance;
-	}
-
-	public void setDisbursementDetails(List<LoanDisbursementDetails> disbursementDetails) {
-		this.disbursementDetails = disbursementDetails;
-	}
-
-	public void setPostDatedChecks(List<PostDatedChecks> postDatedChecks) {
-		this.postDatedChecks = postDatedChecks;
-	}
-
-	public void setLoanTermVariations(List<LoanTermVariations> loanTermVariations) {
-		this.loanTermVariations = loanTermVariations;
-	}
-
-	public void setNpa(boolean isNpa) {
-		this.isNpa = isNpa;
-	}
-
-	public void setAccruedTill(LocalDate accruedTill) {
-		this.accruedTill = accruedTill;
-	}
-
-	public void setLoanSubStatus(Integer loanSubStatus) {
-		this.loanSubStatus = loanSubStatus;
-	}
-
-	public void setTopup(boolean isTopup) {
-		this.isTopup = isTopup;
-	}
-    
-    
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
+    }
+
+    public Fund getFund() {
+        return fund;
+    }
+
+    public void setFund(Fund fund) {
+        this.fund = fund;
+    }
+
+    public CodeValue getLoanPurpose() {
+        return loanPurpose;
+    }
+
+    public void setLoanPurpose(CodeValue loanPurpose) {
+        this.loanPurpose = loanPurpose;
+    }
+
+    public LoanTransactionProcessingStrategy getTransactionProcessingStrategy() {
+        return transactionProcessingStrategy;
+    }
+
+    public void setTransactionProcessingStrategy(LoanTransactionProcessingStrategy transactionProcessingStrategy) {
+        this.transactionProcessingStrategy = transactionProcessingStrategy;
+    }
+
+    public Boolean getSyncDisbursementWithMeeting() {
+        return syncDisbursementWithMeeting;
+    }
+
+    public void setSyncDisbursementWithMeeting(Boolean syncDisbursementWithMeeting) {
+        this.syncDisbursementWithMeeting = syncDisbursementWithMeeting;
+    }
+
+    public LocalDate getRejectedOnDate() {
+        return rejectedOnDate;
+    }
+
+    public void setRejectedOnDate(LocalDate rejectedOnDate) {
+        this.rejectedOnDate = rejectedOnDate;
+    }
+
+    public AppUser getRejectedBy() {
+        return rejectedBy;
+    }
+
+    public void setRejectedBy(AppUser rejectedBy) {
+        this.rejectedBy = rejectedBy;
+    }
+
+    public LocalDate getWithdrawnOnDate() {
+        return withdrawnOnDate;
+    }
+
+    public void setWithdrawnOnDate(LocalDate withdrawnOnDate) {
+        this.withdrawnOnDate = withdrawnOnDate;
+    }
+
+    public AppUser getWithdrawnBy() {
+        return withdrawnBy;
+    }
+
+    public void setWithdrawnBy(AppUser withdrawnBy) {
+        this.withdrawnBy = withdrawnBy;
+    }
+
+    public AppUser getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(AppUser approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public LocalDate getExpectedDisbursementDate() {
+        return expectedDisbursementDate;
+    }
+
+    public void setExpectedDisbursementDate(LocalDate expectedDisbursementDate) {
+        this.expectedDisbursementDate = expectedDisbursementDate;
+    }
+
+    public AppUser getDisbursedBy() {
+        return disbursedBy;
+    }
+
+    public void setDisbursedBy(AppUser disbursedBy) {
+        this.disbursedBy = disbursedBy;
+    }
+
+    public AppUser getClosedBy() {
+        return closedBy;
+    }
+
+    public void setClosedBy(AppUser closedBy) {
+        this.closedBy = closedBy;
+    }
+
+    public LocalDate getWrittenOffOnDate() {
+        return writtenOffOnDate;
+    }
+
+    public void setWrittenOffOnDate(LocalDate writtenOffOnDate) {
+        this.writtenOffOnDate = writtenOffOnDate;
+    }
+
+    public LocalDate getRescheduledOnDate() {
+        return rescheduledOnDate;
+    }
+
+    public void setRescheduledOnDate(LocalDate rescheduledOnDate) {
+        this.rescheduledOnDate = rescheduledOnDate;
+    }
+
+    public AppUser getRescheduledByUser() {
+        return rescheduledByUser;
+    }
+
+    public void setRescheduledByUser(AppUser rescheduledByUser) {
+        this.rescheduledByUser = rescheduledByUser;
+    }
+
+    public LocalDate getActualMaturityDate() {
+        return actualMaturityDate;
+    }
+
+    public void setActualMaturityDate(LocalDate actualMaturityDate) {
+        this.actualMaturityDate = actualMaturityDate;
+    }
+
+    public Integer getLoanCounter() {
+        return loanCounter;
+    }
+
+    public void setLoanCounter(Integer loanCounter) {
+        this.loanCounter = loanCounter;
+    }
+
+    public Integer getLoanProductCounter() {
+        return loanProductCounter;
+    }
+
+    public void setLoanProductCounter(Integer loanProductCounter) {
+        this.loanProductCounter = loanProductCounter;
+    }
+
+    public Set<LoanTrancheCharge> getTrancheCharges() {
+        return trancheCharges;
+    }
+
+    public void setTrancheCharges(Set<LoanTrancheCharge> trancheCharges) {
+        this.trancheCharges = trancheCharges;
+    }
+
+    public Set<LoanOfficerAssignmentHistory> getLoanOfficerHistory() {
+        return loanOfficerHistory;
+    }
+
+    public void setLoanOfficerHistory(Set<LoanOfficerAssignmentHistory> loanOfficerHistory) {
+        this.loanOfficerHistory = loanOfficerHistory;
+    }
+
+    public LoanRepaymentScheduleTransactionProcessorFactory getTransactionProcessorFactory() {
+        return transactionProcessorFactory;
+    }
+
+    public void setTransactionProcessorFactory(LoanRepaymentScheduleTransactionProcessorFactory transactionProcessorFactory) {
+        this.transactionProcessorFactory = transactionProcessorFactory;
+    }
+
+    public LoanLifecycleStateMachine getLoanLifecycleStateMachine() {
+        return loanLifecycleStateMachine;
+    }
+
+    public void setLoanLifecycleStateMachine(LoanLifecycleStateMachine loanLifecycleStateMachine) {
+        this.loanLifecycleStateMachine = loanLifecycleStateMachine;
+    }
+
+    public LoanSummaryWrapper getLoanSummaryWrapper() {
+        return loanSummaryWrapper;
+    }
+
+    public void setLoanSummaryWrapper(LoanSummaryWrapper loanSummaryWrapper) {
+        this.loanSummaryWrapper = loanSummaryWrapper;
+    }
+
+    public BigDecimal getTotalRecovered() {
+        return totalRecovered;
+    }
+
+    public void setTotalRecovered(BigDecimal totalRecovered) {
+        this.totalRecovered = totalRecovered;
+    }
+
+    public LoanInterestRecalculationDetails getLoanInterestRecalculationDetails() {
+        return loanInterestRecalculationDetails;
+    }
+
+    public void setLoanInterestRecalculationDetails(LoanInterestRecalculationDetails loanInterestRecalculationDetails) {
+        this.loanInterestRecalculationDetails = loanInterestRecalculationDetails;
+    }
+
+    public Boolean getCreateStandingInstructionAtDisbursement() {
+        return createStandingInstructionAtDisbursement;
+    }
+
+    public void setCreateStandingInstructionAtDisbursement(Boolean createStandingInstructionAtDisbursement) {
+        this.createStandingInstructionAtDisbursement = createStandingInstructionAtDisbursement;
+    }
+
+    public BigDecimal getGuaranteeAmountDerived() {
+        return guaranteeAmountDerived;
+    }
+
+    public void setGuaranteeAmountDerived(BigDecimal guaranteeAmountDerived) {
+        this.guaranteeAmountDerived = guaranteeAmountDerived;
+    }
+
+    public LocalDate getInterestRecalculatedOn() {
+        return interestRecalculatedOn;
+    }
+
+    public void setInterestRecalculatedOn(LocalDate interestRecalculatedOn) {
+        this.interestRecalculatedOn = interestRecalculatedOn;
+    }
+
+    public CodeValue getWriteOffReason() {
+        return writeOffReason;
+    }
+
+    public void setWriteOffReason(CodeValue writeOffReason) {
+        this.writeOffReason = writeOffReason;
+    }
+
+    public LoanTopupDetails getLoanTopupDetails() {
+        return loanTopupDetails;
+    }
+
+    public void setLoanTopupDetails(LoanTopupDetails loanTopupDetails) {
+        this.loanTopupDetails = loanTopupDetails;
+    }
+
+    public BigDecimal getFixedPrincipalPercentagePerInstallment() {
+        return fixedPrincipalPercentagePerInstallment;
+    }
+
+    public void setFixedPrincipalPercentagePerInstallment(BigDecimal fixedPrincipalPercentagePerInstallment) {
+        this.fixedPrincipalPercentagePerInstallment = fixedPrincipalPercentagePerInstallment;
+    }
+
+    public Integer getSimiPrincipalGrace() {
+        return simiPrincipalGrace;
+    }
+
+    public void setSimiPrincipalGrace(Integer simiPrincipalGrace) {
+        this.simiPrincipalGrace = simiPrincipalGrace;
+    }
+
+    public static Logger getLog() {
+        return LOG;
+    }
+
+    public Integer getLoanStatus() {
+        return loanStatus;
+    }
+
+    public LocalDate getActualDisbursementDate() {
+        return actualDisbursementDate;
+    }
+
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
+    }
+
+    public void setLoanProduct(LoanProduct loanProduct) {
+        this.loanProduct = loanProduct;
+    }
+
+    public void setLoanOfficer(Staff loanOfficer) {
+        this.loanOfficer = loanOfficer;
+    }
+
+    public void setLoanRepaymentScheduleDetail(LoanProductRelatedDetail loanRepaymentScheduleDetail) {
+        this.loanRepaymentScheduleDetail = loanRepaymentScheduleDetail;
+    }
+
+    public void setTermFrequency(Integer termFrequency) {
+        this.termFrequency = termFrequency;
+    }
+
+    public void setTermPeriodFrequencyType(Integer termPeriodFrequencyType) {
+        this.termPeriodFrequencyType = termPeriodFrequencyType;
+    }
+
+    public void setSubmittedOnDate(LocalDate submittedOnDate) {
+        this.submittedOnDate = submittedOnDate;
+    }
+
+    public void setApprovedOnDate(LocalDate approvedOnDate) {
+        this.approvedOnDate = approvedOnDate;
+    }
+
+    public void setClosedOnDate(LocalDate closedOnDate) {
+        this.closedOnDate = closedOnDate;
+    }
+
+    public void setExpectedMaturityDate(LocalDate expectedMaturityDate) {
+        this.expectedMaturityDate = expectedMaturityDate;
+    }
+
+    public void setInterestChargedFromDate(LocalDate interestChargedFromDate) {
+        this.interestChargedFromDate = interestChargedFromDate;
+    }
+
+    public void setTotalOverpaid(BigDecimal totalOverpaid) {
+        this.totalOverpaid = totalOverpaid;
+    }
+
+    public void setCharges(Set<LoanCharge> charges) {
+        this.charges = charges;
+    }
+
+    public void setCollateral(Set<LoanCollateral> collateral) {
+        this.collateral = collateral;
+    }
+
+    public void setLoanCollateralManagements(Set<LoanCollateralManagement> loanCollateralManagements) {
+        this.loanCollateralManagements = loanCollateralManagements;
+    }
+
+    public void setRepaymentScheduleInstallments(List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments) {
+        this.repaymentScheduleInstallments = repaymentScheduleInstallments;
+    }
+
+    public void setLoanTransactions(List<LoanTransaction> loanTransactions) {
+        this.loanTransactions = loanTransactions;
+    }
+
+    public void setSummary(LoanSummary summary) {
+        this.summary = summary;
+    }
+
+    public void setProposedPrincipal(BigDecimal proposedPrincipal) {
+        this.proposedPrincipal = proposedPrincipal;
+    }
+
+    public void setApprovedPrincipal(BigDecimal approvedPrincipal) {
+        this.approvedPrincipal = approvedPrincipal;
+    }
+
+    public void setFixedEmiAmount(BigDecimal fixedEmiAmount) {
+        this.fixedEmiAmount = fixedEmiAmount;
+    }
+
+    public void setMaxOutstandingLoanBalance(BigDecimal maxOutstandingLoanBalance) {
+        this.maxOutstandingLoanBalance = maxOutstandingLoanBalance;
+    }
+
+    public void setDisbursementDetails(List<LoanDisbursementDetails> disbursementDetails) {
+        this.disbursementDetails = disbursementDetails;
+    }
+
+    public void setPostDatedChecks(List<PostDatedChecks> postDatedChecks) {
+        this.postDatedChecks = postDatedChecks;
+    }
+
+    public void setLoanTermVariations(List<LoanTermVariations> loanTermVariations) {
+        this.loanTermVariations = loanTermVariations;
+    }
+
+    public void setNpa(boolean isNpa) {
+        this.isNpa = isNpa;
+    }
+
+    public void setAccruedTill(LocalDate accruedTill) {
+        this.accruedTill = accruedTill;
+    }
+
+    public void setLoanSubStatus(Integer loanSubStatus) {
+        this.loanSubStatus = loanSubStatus;
+    }
+
+    public void setTopup(boolean isTopup) {
+        this.isTopup = isTopup;
+    }
+
 }

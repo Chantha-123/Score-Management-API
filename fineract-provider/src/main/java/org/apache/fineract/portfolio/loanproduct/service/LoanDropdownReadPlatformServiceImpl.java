@@ -80,8 +80,9 @@ public class LoanDropdownReadPlatformServiceImpl implements LoanDropdownReadPlat
     @Override
     public List<EnumOptionData> retrieveLoanInterestTypeOptions() {
         final List<EnumOptionData> allowedRepaymentScheduleCalculationMethods = Arrays.asList(
-                interestType(InterestMethod.DECLINING_BALANCE),interestType(InterestMethod.BALLOON),interestType(InterestMethod.SEMI_BALOON),
-                interestType(InterestMethod.AMORTIZATION), interestType(InterestMethod.AMORTIZATION_FEE));
+                interestType(InterestMethod.DECLINING_BALANCE), interestType(InterestMethod.BALLOON),
+                interestType(InterestMethod.SEMI_BALOON), interestType(InterestMethod.AMORTIZATION),
+                interestType(InterestMethod.AMORTIZATION_FEE));
 
         return allowedRepaymentScheduleCalculationMethods;
     }
