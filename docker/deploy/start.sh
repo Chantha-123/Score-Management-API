@@ -53,3 +53,15 @@ for ip in $ips; do
   # Skip Docker's own bridge networks.
   case "$ip" in 172.1[7-9].*|172.2[0-9].*|172.3[01].*) ;; *) echo "  LAN         : http://$ip:$web/" ;; esac
 done
+
+dbbind=$(envval DB_BIND_ADDRESS 127.0.0.1); dbport=$(envval DB_PORT 3306)
+echo
+echo "DBeaver (MariaDB): database fineract_default, user fineract, password = DB_PASSWORD in .env"
+echo "  This laptop : localhost:$dbport"
+if [ "$dbbind" = 127.0.0.1 ]; then
+  echo "  Other PCs   : disabled (set DB_BIND_ADDRESS=0.0.0.0 in .env and rerun)"
+else
+  for ip in $ips; do
+    case "$ip" in 172.1[7-9].*|172.2[0-9].*|172.3[01].*) ;; *) echo "  LAN         : $ip:$dbport" ;; esac
+  done
+fi

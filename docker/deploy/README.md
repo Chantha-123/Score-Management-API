@@ -20,8 +20,8 @@ expected next to this one (`..\Score-Management-System-Frontend`); pass
 `-NoBuild` to push images that are already built.
 
 Give the testing laptop this folder **without** `images\` and `.env`. Only
-`compose.yml`, `.env.example`, `start.ps1`, `start.sh` and `open-firewall.ps1`
-are needed. If the Docker Hub repository is private, also run `docker login` on
+`compose.yml`, `.env.example`, `start.ps1`, `start.sh`, `open-firewall.ps1` and
+`import-data.ps1` are needed (plus `data\` if you copy data, see below). If the Docker Hub repository is private, also run `docker login` on
 the laptop.
 
 For a laptop without internet, add `-Export`. That also writes
@@ -82,6 +82,48 @@ On another laptop, **don't** use `baseApiUrl=https://localhost:8443/…`, becaus
 `localhost` there means that laptop. Use `http://<IP>:9002/`, or if you need the
 explicit form, `http://<IP>:9002/?baseApiUrl=https://<IP>:8443/fineract-provider/api/v1#`
 after accepting the certificate at `https://<IP>:8443/fineract-provider/actuator/health`.
+
+## 4. Connect with DBeaver
+
+New Connection > **MariaDB**. The passwords are in `.env` on the testing laptop.
+
+| Field | Value |
+|---|---|
+| Host | `localhost` on the testing laptop, `<testing-laptop-IP>` from another PC |
+| Port | `DB_PORT` from `.env` (default `3306`) |
+| Database | `fineract_default` (app data); `fineract_tenants` is the tenant registry |
+| Username / Password | `fineract` / `DB_PASSWORD` (or `root` / `DB_ROOT_PASSWORD` for admin) |
+
+If DBeaver reports an SSL or public-key error, set `allowPublicKeyRetrieval=true`
+and `useSSL=false` under Driver properties.
+
+By default the database listens on `127.0.0.1` only, so DBeaver works only on
+the testing laptop itself. To connect from another PC:
+
+1. Set `DB_BIND_ADDRESS=0.0.0.0` in `.env` and run `start.ps1` again (this
+   recreates only the database container; data is kept).
+2. As Administrator: `powershell -ExecutionPolicy Bypass -File open-firewall.ps1 -IncludeDb`
+
+Both `fineract` and `root` can log in from any host. Open the database to the
+LAN only on a trusted network, prefer the `fineract` user, and switch back to
+`127.0.0.1` when you're done.
+
+## 5. Copy data from another laptop (optional)
+
+A new laptop starts with an empty database. To give it the same data as an
+existing one:
+
+1. On the source laptop (stack running): `powershell -ExecutionPolicy Bypass -File export-data.ps1`.
+   This writes `data\fineract_default.sql`.
+2. Copy that `data` folder next to `start.ps1` on the target laptop.
+3. On the target laptop, run `start.ps1` once, then
+   `powershell -ExecutionPolicy Bypass -File import-data.ps1` and type `YES`.
+
+The import **replaces** everything in `fineract_default` on the target. App
+logins become the source laptop's users and passwords. Only the app data is
+copied: each laptop keeps its own `.env` and database passwords. A dump from an
+older image version works, because the API applies newer migrations on start.
+The dump contains real customer data, so don't commit or share it.
 
 ## Notes
 

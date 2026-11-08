@@ -82,3 +82,14 @@ foreach ($ip in $ips) {
     Write-Host "  LAN         : http://${ip}:${webPort}/   (no certificate prompt needed)"
 }
 Write-Host '  LAN access needs the firewall rule once: run open-firewall.ps1 as Administrator.'
+
+$dbBind = Get-EnvValue 'DB_BIND_ADDRESS' '127.0.0.1'
+$dbPort = Get-EnvValue 'DB_PORT' '3306'
+Write-Host ''
+Write-Host 'DBeaver (MariaDB): database fineract_default, user fineract, password = DB_PASSWORD in .env'
+Write-Host "  This laptop : localhost:${dbPort}"
+if ($dbBind -eq '127.0.0.1') {
+    Write-Host '  Other PCs   : disabled (set DB_BIND_ADDRESS=0.0.0.0 in .env, rerun, then open-firewall.ps1 -IncludeDb)'
+} else {
+    foreach ($ip in $ips) { Write-Host "  LAN         : ${ip}:${dbPort}   (needs open-firewall.ps1 -IncludeDb once)" }
+}

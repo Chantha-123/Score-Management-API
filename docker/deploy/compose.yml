@@ -22,6 +22,9 @@ services:
       MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - database:/var/lib/mysql
+    # For DBeaver/SQL clients. Localhost only unless DB_BIND_ADDRESS=0.0.0.0 in .env.
+    ports:
+      - "${DB_BIND_ADDRESS:-127.0.0.1}:${DB_PORT:-3306}:3306"
     healthcheck:
       test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
       interval: 10s

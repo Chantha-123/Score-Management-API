@@ -11,12 +11,14 @@
 param(
     [Parameter(Mandatory = $true)][string]$Tag,
     [string]$Repo = 'pichoudam/mini_pawnshop_v1',
-    [string]$FrontendPath = (Join-Path $PSScriptRoot '..\..\Score-Management-System-Frontend'),
+    # Defaulted below: Windows PowerShell 5.1 leaves $PSScriptRoot empty in param defaults.
+    [string]$FrontendPath,
     [switch]$Push,
     [switch]$NoBuild,
     [switch]$Export
 )
 $ErrorActionPreference = 'Stop'
+if (-not $FrontendPath) { $FrontendPath = Join-Path $PSScriptRoot '..\..\Score-Management-System-Frontend' }
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $env:DOCKER_BUILDKIT = '1'
 
