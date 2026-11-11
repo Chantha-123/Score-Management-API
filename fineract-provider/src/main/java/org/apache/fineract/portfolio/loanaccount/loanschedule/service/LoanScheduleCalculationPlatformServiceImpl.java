@@ -111,7 +111,7 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
 
         if (validateParams) {
             boolean isMeetingMandatoryForJLGLoans = configurationDomainService.isMeetingMandatoryForJLGLoans();
-            this.loanApiJsonDeserializer.validateForCreate(query.json(), isMeetingMandatoryForJLGLoans, loanProduct);
+            this.loanApiJsonDeserializer.validateForCreate(query.json(), isMeetingMandatoryForJLGLoans, loanProduct, true);
         }
         this.fromApiJsonDeserializer.validate(query.json());
 

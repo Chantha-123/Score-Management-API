@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -70,6 +71,15 @@ public final class CollateralCommandFromApiJsonDeserializer extends AbstractFrom
         final String description = this.fromApiJsonHelper.extractStringNamed(CollateralJSONinputParams.DESCRIPTION.getValue(), element);
         final BigDecimal value = this.fromApiJsonHelper.extractBigDecimalNamed(CollateralJSONinputParams.VALUE.getValue(), element, locale);
 
-        return new CollateralCommand(collateralTypeId, value, description);
+        final BigDecimal bookingAmount = this.fromApiJsonHelper.extractBigDecimalNamed(CollateralJSONinputParams.BOOKING_AMOUNT.getValue(),
+                element, locale);
+        final BigDecimal evaluationAmount = this.fromApiJsonHelper
+                .extractBigDecimalNamed(CollateralJSONinputParams.EVALUATION_AMOUNT.getValue(), element, locale);
+        final LocalDate issuedOnDate = this.fromApiJsonHelper.extractLocalDateNamed(CollateralJSONinputParams.ISSUED_ON_DATE.getValue(),
+                element);
+        final LocalDate expiredOnDate = this.fromApiJsonHelper.extractLocalDateNamed(CollateralJSONinputParams.EXPIRED_ON_DATE.getValue(),
+                element);
+
+        return new CollateralCommand(collateralTypeId, value, description, bookingAmount, evaluationAmount, issuedOnDate, expiredOnDate);
     }
 }

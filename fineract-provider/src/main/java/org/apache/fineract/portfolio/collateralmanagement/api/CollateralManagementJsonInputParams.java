@@ -20,8 +20,8 @@ package org.apache.fineract.portfolio.collateralmanagement.api;
 
 public enum CollateralManagementJsonInputParams {
 
-    NAME("name"), QUALITY("quality"), BASE_PRICE("basePrice"), UNIT_TYPE("unitType"), PCT_TO_BASE("pctToBase"), CURRENCY(
-            "currency"), COLLATERAL_PRODUCT_READ_PERMISSION("COLLATERAL_PRODUCT"), CLIENT_COLLATERAL_PRODUCT_READ_PERMISSION(
+    NAME("name"), QUALITY("quality"), UNIT_TYPE("unitType"), CURRENCY("currency"), COLLATERAL_PRODUCT_READ_PERMISSION(
+            "COLLATERAL_PRODUCT"), CLIENT_COLLATERAL_PRODUCT_READ_PERMISSION(
                     "CLIENT_COLLATERAL_PRODUCT"), QUANTITY("quantity"), TOTAL_COLLATERAL_VALUE("totalCollateralValue");
 
     private final String value;

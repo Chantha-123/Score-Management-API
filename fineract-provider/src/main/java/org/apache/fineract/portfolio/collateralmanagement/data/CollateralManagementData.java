@@ -18,18 +18,13 @@
  */
 package org.apache.fineract.portfolio.collateralmanagement.data;
 
-import java.math.BigDecimal;
 import org.apache.fineract.portfolio.collateralmanagement.domain.CollateralManagementDomain;
 
 public final class CollateralManagementData {
 
     private String quality;
 
-    private BigDecimal basePrice;
-
     private String unitType;
-
-    private BigDecimal pctToBase;
 
     private String currency;
 
@@ -37,10 +32,7 @@ public final class CollateralManagementData {
 
     private Long id;
 
-    private CollateralManagementData(final String quality, final BigDecimal basePrice, final String unitType, final BigDecimal pctToBase,
-            final String currency, final String name, final Long id) {
-        this.basePrice = basePrice;
-        this.pctToBase = pctToBase;
+    private CollateralManagementData(final String quality, final String unitType, final String currency, final String name, final Long id) {
         this.quality = quality;
         this.unitType = unitType;
         this.currency = currency;
@@ -49,8 +41,7 @@ public final class CollateralManagementData {
     }
 
     public static CollateralManagementData createNew(final CollateralManagementDomain collateralManagementDomain) {
-        return new CollateralManagementData(collateralManagementDomain.getQuality(), collateralManagementDomain.getBasePrice(),
-                collateralManagementDomain.getUnitType(), collateralManagementDomain.getPctToBase(),
+        return new CollateralManagementData(collateralManagementDomain.getQuality(), collateralManagementDomain.getUnitType(),
                 collateralManagementDomain.getCurrency().getCode(), collateralManagementDomain.getName(),
                 collateralManagementDomain.getId());
     }

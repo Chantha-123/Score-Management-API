@@ -18,7 +18,6 @@
  */
 package org.apache.fineract.portfolio.collateralmanagement.domain;
 
-import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -47,14 +46,8 @@ public class CollateralManagementDomain extends AbstractPersistableCustom {
     @Column(name = "quality", nullable = false, length = 40)
     private String quality;
 
-    @Column(name = "base_price", nullable = false, scale = 5, precision = 20)
-    private BigDecimal basePrice;
-
     @Column(name = "unit_type", nullable = false, length = 10)
     private String unitType;
-
-    @Column(name = "pct_to_base", nullable = false, scale = 5, precision = 20)
-    private BigDecimal pctToBase;
 
     @ManyToOne
     @JoinColumn(name = "currency")
@@ -67,11 +60,8 @@ public class CollateralManagementDomain extends AbstractPersistableCustom {
 
     }
 
-    private CollateralManagementDomain(final String quality, final BigDecimal basePrice, final String unitType, final BigDecimal pctToBase,
-            final ApplicationCurrency currency, final String name) {
-        this.basePrice = basePrice;
+    private CollateralManagementDomain(final String quality, final String unitType, final ApplicationCurrency currency, final String name) {
         this.currency = currency;
-        this.pctToBase = pctToBase;
         this.unitType = unitType;
         this.quality = quality;
         this.name = name;
@@ -79,11 +69,9 @@ public class CollateralManagementDomain extends AbstractPersistableCustom {
 
     public static CollateralManagementDomain createNew(JsonCommand jsonCommand, final ApplicationCurrency applicationCurrency) {
         String quality = jsonCommand.stringValueOfParameterNamed("quality");
-        BigDecimal basePrice = jsonCommand.bigDecimalValueOfParameterNamed("basePrice");
-        BigDecimal pctToBase = jsonCommand.bigDecimalValueOfParameterNamedDefaultToNullIfZero("pctToBase");
         String unitType = jsonCommand.stringValueOfParameterNamed("unitType");
         String name = jsonCommand.stringValueOfParameterNamed("name");
-        return new CollateralManagementDomain(quality, basePrice, unitType, pctToBase, applicationCurrency, name);
+        return new CollateralManagementDomain(quality, unitType, applicationCurrency, name);
     }
 
     public Map<String, Object> update(final JsonCommand command, final ApplicationCurrency applicationCurrency) {
@@ -110,20 +98,9 @@ public class CollateralManagementDomain extends AbstractPersistableCustom {
             changes.put(unitTypeParamName, this.unitType);
         }
 
-        this.currency = applicationCurrency;
-
-        final String basePriceParamName = CollateralManagementJsonInputParams.BASE_PRICE.getValue();
-        if (command.isChangeInBigDecimalParameterNamed(basePriceParamName, this.basePrice)) {
-            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(basePriceParamName);
-            this.basePrice = newValue;
-            changes.put(basePriceParamName, this.basePrice);
-        }
-
-        final String pctToBaseParamName = CollateralManagementJsonInputParams.PCT_TO_BASE.getValue();
-        if (command.isChangeInBigDecimalParameterNamed(pctToBaseParamName, this.pctToBase)) {
-            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(pctToBaseParamName);
-            this.pctToBase = newValue;
-            changes.put(pctToBaseParamName, this.pctToBase);
+        if (applicationCurrency != null && (this.currency == null || !this.currency.getCode().equals(applicationCurrency.getCode()))) {
+            this.currency = applicationCurrency;
+            changes.put(CollateralManagementJsonInputParams.CURRENCY.getValue(), applicationCurrency.getCode());
         }
 
         return changes;
@@ -139,14 +116,6 @@ public class CollateralManagementDomain extends AbstractPersistableCustom {
 
     public ApplicationCurrency getCurrency() {
         return this.currency;
-    }
-
-    public BigDecimal getBasePrice() {
-        return this.basePrice;
-    }
-
-    public BigDecimal getPctToBase() {
-        return this.pctToBase;
     }
 
     public String getName() {

@@ -18,7 +18,6 @@
  */
 package org.apache.fineract.portfolio.collateralmanagement.service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -73,15 +72,6 @@ public class ClientCollateralManagementReadPlatformServiceImpl implements Client
     public ClientCollateralManagementData getClientCollateralManagementData(final Long collateralId) {
         final ClientCollateralManagement clientCollateralManagement = this.clientCollateralManagementRepositoryWrapper
                 .getCollateral(collateralId);
-        BigDecimal basePrice = clientCollateralManagement.getCollaterals().getBasePrice();
-        BigDecimal pctToBase = clientCollateralManagement.getCollaterals().getPctToBase().divide(BigDecimal.valueOf(100));
-        BigDecimal total = BigDecimal.ZERO;
-        BigDecimal totalCollateral = BigDecimal.ZERO;
-        BigDecimal quantity = clientCollateralManagement.getQuantity();
-        if (quantity.compareTo(BigDecimal.ZERO) != 0) {
-            total = basePrice.multiply(quantity);
-            totalCollateral = total.multiply(pctToBase);
-        }
         Set<LoanCollateralManagement> loanCollateralManagementSet = clientCollateralManagement.getLoanCollateralManagementSet();
 
         List<LoanTransactionData> loanTransactionDataList = new ArrayList<>();
@@ -98,7 +88,7 @@ public class ClientCollateralManagementReadPlatformServiceImpl implements Client
         }
 
         return ClientCollateralManagementData.instance(clientCollateralManagement.getCollaterals().getName(),
-                clientCollateralManagement.getQuantity(), total, totalCollateral, clientCollateralManagement.getClient().getId(),
-                loanTransactionDataList, clientCollateralManagement.getId());
+                clientCollateralManagement.getQuantity(), clientCollateralManagement.getClient().getId(), loanTransactionDataList,
+                clientCollateralManagement.getId());
     }
 }

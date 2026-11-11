@@ -18,7 +18,6 @@
  */
 package org.apache.fineract.portfolio.client.service;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -306,10 +305,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
             // Map to client collateral data class
             for (ClientCollateralManagement clientCollateralManagement : clientCollateralManagements) {
-                BigDecimal total = clientCollateralManagement.getTotal();
-                BigDecimal totalCollateral = clientCollateralManagement.getTotalCollateral(total);
-                clientCollateralManagementDataSet
-                        .add(ClientCollateralManagementData.setCollateralValues(clientCollateralManagement, total, totalCollateral));
+                clientCollateralManagementDataSet.add(ClientCollateralManagementData.setCollateralValues(clientCollateralManagement));
             }
 
             final String clientGroupsSql = "select " + this.clientGroupsMapper.parentGroupsSchema();

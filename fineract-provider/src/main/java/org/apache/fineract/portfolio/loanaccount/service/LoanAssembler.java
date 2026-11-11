@@ -48,7 +48,6 @@ import org.apache.fineract.portfolio.accountdetails.service.AccountEnumerations;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientRepositoryWrapper;
 import org.apache.fineract.portfolio.client.exception.ClientNotActiveException;
-import org.apache.fineract.portfolio.collateralmanagement.domain.CollateralManagementDomain;
 import org.apache.fineract.portfolio.collateralmanagement.service.LoanCollateralAssembler;
 import org.apache.fineract.portfolio.fund.domain.Fund;
 import org.apache.fineract.portfolio.fund.domain.FundRepository;
@@ -71,7 +70,6 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanSummaryWrapper;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionProcessingStrategyRepository;
 import org.apache.fineract.portfolio.loanaccount.exception.ExceedingTrancheCountException;
-import org.apache.fineract.portfolio.loanaccount.exception.InvalidAmountOfCollaterals;
 import org.apache.fineract.portfolio.loanaccount.exception.LoanTransactionProcessingStrategyNotFoundException;
 import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementDataNotAllowedException;
 import org.apache.fineract.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
@@ -232,22 +230,8 @@ public class LoanAssembler {
             final AccountType loanAccountType = AccountType.fromName(loanTypeStr);
 
             if (loanAccountType.isIndividualAccount()) {
+                // collateral records what was pledged; it carries no valuation and does not limit the principal
                 collateral = this.collateralAssembler.fromParsedJson(element);
-
-                if (collateral.size() > 0) {
-                    BigDecimal totalValue = BigDecimal.ZERO;
-                    for (LoanCollateralManagement collateralManagement : collateral) {
-                        final CollateralManagementDomain collateralManagementDomain = collateralManagement.getClientCollateralManagement()
-                                .getCollaterals();
-                        BigDecimal totalCollateral = collateralManagement.getQuantity().multiply(collateralManagementDomain.getBasePrice())
-                                .multiply(collateralManagementDomain.getPctToBase()).divide(BigDecimal.valueOf(100));
-                        totalValue = totalValue.add(totalCollateral);
-                    }
-
-                    if (amount.compareTo(totalValue) > 0) {
-                        throw new InvalidAmountOfCollaterals(totalValue);
-                    }
-                }
             }
         }
 

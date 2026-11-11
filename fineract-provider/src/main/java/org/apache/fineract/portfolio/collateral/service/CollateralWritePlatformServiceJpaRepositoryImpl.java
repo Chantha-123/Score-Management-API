@@ -18,12 +18,16 @@
  */
 package org.apache.fineract.portfolio.collateral.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.apache.fineract.infrastructure.codes.domain.CodeValue;
 import org.apache.fineract.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.infrastructure.core.data.ApiParameterError;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.portfolio.collateral.api.CollateralApiConstants;
@@ -121,10 +125,18 @@ public class CollateralWritePlatformServiceJpaRepositoryImpl implements Collater
             final Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanId, true);
             CodeValue collateralType = null;
 
-            final LoanCollateral collateralForUpdate = this.collateralRepository.findById(collateralId)
-                    .orElseThrow(() -> new CollateralNotFoundException(loanId, collateralId));
+            final LoanCollateral collateralForUpdate = this.collateralRepository.findByLoanIdAndId(loanId, collateralId);
+            if (collateralForUpdate == null) {
+                throw new CollateralNotFoundException(loanId, collateralId);
+            }
 
             final Map<String, Object> changes = collateralForUpdate.update(command);
+
+            // expiry must stay on/after the issue date once the partial update is merged
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            CollateralCommand.validateExpiry(new DataValidatorBuilder(dataValidationErrors).resource("collateral"),
+                    collateralForUpdate.getIssuedOnDate(), collateralForUpdate.getExpiredOnDate());
+            CollateralCommand.throwExceptionIfValidationWarningsExist(dataValidationErrors);
 
             if (changes.containsKey(CollateralJSONinputParams.COLLATERAL_TYPE_ID.getValue())) {
 

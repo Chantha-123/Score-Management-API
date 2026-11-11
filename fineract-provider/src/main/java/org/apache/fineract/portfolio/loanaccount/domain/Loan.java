@@ -2794,45 +2794,30 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom {
         final MathContext mc = new MathContext(8, roundingMode);
 
         final LoanApplicationTerms loanApplicationTerms = constructLoanApplicationTerms(scheduleGeneratorDTO);
-        LoanScheduleGenerator loanScheduleGenerator = null;
-        if (loanApplicationTerms.isEqualAmortization()) {
-            if (loanApplicationTerms.getInterestMethod().isDecliningBalnce()) {
-                final LoanScheduleGenerator decliningLoanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory()
-                        .create(InterestMethod.DECLINING_BALANCE);
-                Set<LoanCharge> loanCharges = charges();
-                LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges,
-                        scheduleGeneratorDTO.getHolidayDetailDTO());
-
-                loanApplicationTerms
-                        .updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
-
-            }
-            loanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory().create(loanApplicationTerms.getInterestMethod());
-        }
-        if (loanApplicationTerms.getInterestMethod().isAnunityFee()) {
-            final LoanScheduleGenerator decliningLoanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory()
-                    .create(InterestMethod.DECLINING_BALANCE);
-            Set<LoanCharge> loanCharges = charges();
+        // Mirrors LoanScheduleAssembler.assembleLoanScheduleFrom so a regenerated schedule matches the one built at
+        // submission.
+        final InterestMethod interestMethod = loanApplicationTerms.getInterestMethod();
+        if (interestMethod.isAnunityFee()) {
             BigDecimal chargePercent = BigDecimal.ZERO;
-            for (LoanCharge charge : loanCharges) {
+            for (LoanCharge charge : charges()) {
                 if (charge.getChargeCalculation().isPercentageOfOutstandingAmount() && charge.isInstalmentFee()
                         && !charge.isPenaltyCharge()) {
                     chargePercent = charge.getPercentage();
-                    loanApplicationTerms.setAnnulaNorminalChargeRate(chargePercent);
                 }
-
             }
+            loanApplicationTerms.setAnnulaNorminalChargeRate(chargePercent);
+        }
 
-            LoanScheduleModel loanSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges,
+        if (loanApplicationTerms.isEqualAmortization() && (interestMethod.isDecliningBalnce() || interestMethod.isAnunityFee())) {
+            final LoanScheduleGenerator decliningLoanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory()
+                    .create(InterestMethod.DECLINING_BALANCE);
+            final LoanScheduleModel decliningSchedule = decliningLoanScheduleGenerator.generate(mc, loanApplicationTerms, charges(),
                     scheduleGeneratorDTO.getHolidayDetailDTO());
-
             loanApplicationTerms
-                    .updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), loanSchedule.getTotalInterestCharged()));
+                    .updateTotalInterestDue(Money.of(loanApplicationTerms.getCurrency(), decliningSchedule.getTotalInterestCharged()));
         }
 
-        else {
-            loanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory().create(loanApplicationTerms.getInterestMethod());
-        }
+        final LoanScheduleGenerator loanScheduleGenerator = scheduleGeneratorDTO.getLoanScheduleFactory().create(interestMethod);
 
         final LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, loanApplicationTerms, charges(),
                 scheduleGeneratorDTO.getHolidayDetailDTO());

@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.collateral.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.fineract.infrastructure.codes.data.CodeValueData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
@@ -54,6 +55,8 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
 
         private final StringBuilder sqlBuilder = new StringBuilder(
                 "lc.id as id, lc.description as description, lc.value as value, cv.id as typeId, cv.code_value as typeName, oc.code as currencyCode, ")
+                        .append(" lc.booking_amount as bookingAmount, lc.evaluation_amount as evaluationAmount,")
+                        .append(" lc.issued_on_date as issuedOnDate, lc.expired_on_date as expiredOnDate, ")
                         .append(" oc.name as currencyName,oc.decimal_places as currencyDecimalPlaces, oc.currency_multiplesof as inMultiplesOf, oc.display_symbol as currencyDisplaySymbol, oc.internationalized_name_code as currencyNameCode")
                         .append(" FROM m_loan_collateral lc") //
                         .append(" JOIN m_code_value cv on lc.type_cv_id = cv.id")//
@@ -85,7 +88,13 @@ public class CollateralReadPlatformServiceImpl implements CollateralReadPlatform
             final CurrencyData currencyData = new CurrencyData(currencyCode, currencyName, currencyDecimalPlaces, inMultiplesOf,
                     currencyDisplaySymbol, currencyNameCode);
 
-            return CollateralData.instance(id, type, value, description, currencyData);
+            final BigDecimal bookingAmount = rs.getBigDecimal("bookingAmount");
+            final BigDecimal evaluationAmount = rs.getBigDecimal("evaluationAmount");
+            final LocalDate issuedOnDate = JdbcSupport.getLocalDate(rs, "issuedOnDate");
+            final LocalDate expiredOnDate = JdbcSupport.getLocalDate(rs, "expiredOnDate");
+
+            return CollateralData.instance(id, type, value, description, currencyData, bookingAmount, evaluationAmount, issuedOnDate,
+                    expiredOnDate);
         }
     }
 

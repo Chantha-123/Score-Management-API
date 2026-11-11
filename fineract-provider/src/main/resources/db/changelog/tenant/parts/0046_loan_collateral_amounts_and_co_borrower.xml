@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- Per-loan pawned item (m_loan_collateral, type = "LoanCollateral" code value): booking / evaluation amounts and
+         issue / expiry dates. Nullable so existing rows stay valid; the API makes them mandatory on create. -->
+    <changeSet author="fineract" id="loan-collateral-amounts-and-dates">
+        <addColumn tableName="m_loan_collateral">
+            <column name="booking_amount" type="DECIMAL(19, 6)"/>
+            <column name="evaluation_amount" type="DECIMAL(19, 6)"/>
+            <column name="issued_on_date" type="DATE"/>
+            <column name="expired_on_date" type="DATE"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Co-borrowers: clients jointly named on a loan. Repayments/accounting stay on the main borrower. -->
+    <changeSet author="fineract" id="loan-co-borrower-table">
+        <createTable tableName="m_loan_co_borrower">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="loan_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_by" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="m_loan_co_borrower" columnNames="loan_id, client_id" constraintName="uq_m_loan_co_borrower_loan_client"/>
+        <addForeignKeyConstraint baseTableName="m_loan_co_borrower" baseColumnNames="loan_id" constraintName="fk_m_loan_co_borrower_m_loan"
+                                 referencedTableName="m_loan" referencedColumnNames="id" onDelete="RESTRICT" onUpdate="RESTRICT"/>
+        <addForeignKeyConstraint baseTableName="m_loan_co_borrower" baseColumnNames="client_id" constraintName="fk_m_loan_co_borrower_m_client"
+                                 referencedTableName="m_client" referencedColumnNames="id" onDelete="RESTRICT" onUpdate="RESTRICT"/>
+        <addForeignKeyConstraint baseTableName="m_loan_co_borrower" baseColumnNames="created_by" constraintName="fk_m_loan_co_borrower_created_by"
+                                 referencedTableName="m_appuser" referencedColumnNames="id" onDelete="RESTRICT" onUpdate="RESTRICT"/>
+        <addForeignKeyConstraint baseTableName="m_loan_co_borrower" baseColumnNames="last_modified_by" constraintName="fk_m_loan_co_borrower_last_modified_by"
+                                 referencedTableName="m_appuser" referencedColumnNames="id" onDelete="RESTRICT" onUpdate="RESTRICT"/>
+    </changeSet>
+    <changeSet author="fineract" id="loan-co-borrower-audit-dates" context="mysql">
+        <addColumn tableName="m_loan_co_borrower">
+            <column name="created_on_utc" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_on_utc" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="fineract" id="loan-co-borrower-audit-dates" context="postgresql">
+        <addColumn tableName="m_loan_co_borrower">
+            <column name="created_on_utc" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_on_utc" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="fineract" id="loan-co-borrower-permissions">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE entity_name = 'LOANCOBORROWER'</sqlCheck>
+        </preConditions>
+        <insert tableName="m_permission">
+            <column name="grouping" value="portfolio"/>
+            <column name="code" value="READ_LOANCOBORROWER"/>
+            <column name="entity_name" value="LOANCOBORROWER"/>
+            <column name="action_name" value="READ"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+        <insert tableName="m_permission">
+            <column name="grouping" value="portfolio"/>
+            <column name="code" value="CREATE_LOANCOBORROWER"/>
+            <column name="entity_name" value="LOANCOBORROWER"/>
+            <column name="action_name" value="CREATE"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+        <insert tableName="m_permission">
+            <column name="grouping" value="portfolio"/>
+            <column name="code" value="DELETE_LOANCOBORROWER"/>
+            <column name="entity_name" value="LOANCOBORROWER"/>
+            <column name="action_name" value="DELETE"/>
+            <column name="can_maker_checker" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

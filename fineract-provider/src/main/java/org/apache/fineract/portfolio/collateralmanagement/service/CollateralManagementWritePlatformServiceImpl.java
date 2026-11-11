@@ -32,6 +32,7 @@ import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidati
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepository;
+import org.apache.fineract.organisation.monetary.service.CurrencyReadPlatformService;
 import org.apache.fineract.portfolio.collateralmanagement.api.CollateralManagementJsonInputParams;
 import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagement;
 import org.apache.fineract.portfolio.collateralmanagement.domain.CollateralManagementDomain;
@@ -48,13 +49,16 @@ public class CollateralManagementWritePlatformServiceImpl implements CollateralM
     private final CollateralManagementRepositoryWrapper collateralManagementRepositoryWrapper;
     private final ApplicationCurrencyRepository applicationCurrencyRepository;
     private final FromJsonHelper fromApiJsonHelper;
+    private final CurrencyReadPlatformService currencyReadPlatformService;
 
     @Autowired
     public CollateralManagementWritePlatformServiceImpl(final CollateralManagementRepositoryWrapper collateralManagementRepositoryWrapper,
-            final ApplicationCurrencyRepository applicationCurrencyRepository, final FromJsonHelper fromApiJsonHelper) {
+            final ApplicationCurrencyRepository applicationCurrencyRepository, final FromJsonHelper fromApiJsonHelper,
+            final CurrencyReadPlatformService currencyReadPlatformService) {
         this.collateralManagementRepositoryWrapper = collateralManagementRepositoryWrapper;
         this.applicationCurrencyRepository = applicationCurrencyRepository;
         this.fromApiJsonHelper = fromApiJsonHelper;
+        this.currencyReadPlatformService = currencyReadPlatformService;
     }
 
     @Transactional
@@ -87,6 +91,7 @@ public class CollateralManagementWritePlatformServiceImpl implements CollateralM
         } else {
             final String currency = this.fromApiJsonHelper.extractStringNamed("currency", jsonElement);
             baseDataValidator.reset().parameter("currency").value(currency).notNull();
+            validateOrganisationCurrency(currency, baseDataValidator);
         }
 
         if (!jsonCommand.parameterExists("quality")) {
@@ -97,25 +102,11 @@ public class CollateralManagementWritePlatformServiceImpl implements CollateralM
             baseDataValidator.reset().parameter("quality").value(quality).notNull();
         }
 
-        if (!jsonCommand.parameterExists("basePrice")) {
-            baseDataValidator.reset().parameter("basePrice").notNull().notBlank().failWithCode("basePrice.not.exists");
-        } else {
-            final BigDecimal basePrice = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("basePrice", jsonElement);
-            baseDataValidator.reset().parameter("basePrice").value(basePrice).notNull().positiveAmount();
-        }
-
         if (!jsonCommand.parameterExists("unitType")) {
             baseDataValidator.reset().parameter("unitType").notNull().notBlank().failWithCode("unitType.not.exists");
         } else {
             final String unitType = this.fromApiJsonHelper.extractStringNamed("unitType", jsonElement);
             baseDataValidator.reset().parameter("unitType").value(unitType).notNull();
-        }
-
-        if (!jsonCommand.parameterExists("pctToBase")) {
-            baseDataValidator.reset().parameter("pctToBase").notNull().notBlank().failWithCode("pctToBase.not.exists");
-        } else {
-            final BigDecimal basePrice = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("pctToBase", jsonElement);
-            baseDataValidator.reset().parameter("pctToBase").value(basePrice).notNull().positiveAmount();
         }
 
         if (!jsonCommand.parameterExists("name")) {
@@ -135,16 +126,37 @@ public class CollateralManagementWritePlatformServiceImpl implements CollateralM
     public CommandProcessingResult updateCollateral(final Long collateralId, JsonCommand jsonCommand) {
         final CollateralManagementDomain collateral = this.collateralManagementRepositoryWrapper.getCollateral(collateralId);
         final String currencyParamName = CollateralManagementJsonInputParams.CURRENCY.getValue();
-        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository
-                .findOneByCode(jsonCommand.stringValueOfParameterNamed(currencyParamName));
-        if (jsonCommand.isChangeInStringParameterNamed(currencyParamName, applicationCurrency.getCode())) {
-            final String newValue = jsonCommand.stringValueOfParameterNamed(currencyParamName);
-            applicationCurrency.setCode(newValue);
+        ApplicationCurrency applicationCurrency = null;
+        if (jsonCommand.parameterExists(currencyParamName)) {
+            final String currencyCode = jsonCommand.stringValueOfParameterNamed(currencyParamName);
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("collateral-management");
+            baseDataValidator.reset().parameter(currencyParamName).value(currencyCode).notBlank();
+            validateOrganisationCurrency(currencyCode, baseDataValidator);
+            if (!dataValidationErrors.isEmpty()) {
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
+            applicationCurrency = this.applicationCurrencyRepository.findOneByCode(currencyCode);
         }
         final Map<String, Object> changes = collateral.update(jsonCommand, applicationCurrency);
         this.collateralManagementRepositoryWrapper.update(collateral);
         return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(jsonCommand.entityId())
                 .with(changes).build();
+    }
+
+    /**
+     * Collateral item types may only use a currency enabled for the organisation (Organization &gt; Currencies).
+     */
+    private void validateOrganisationCurrency(final String currencyCode, final DataValidatorBuilder baseDataValidator) {
+        if (currencyCode == null || currencyCode.isBlank()) {
+            return;
+        }
+        final boolean allowed = this.currencyReadPlatformService.retrieveAllowedCurrencies().stream()
+                .anyMatch(currency -> currencyCode.equals(currency.getCode()));
+        if (!allowed) {
+            baseDataValidator.reset().parameter(CollateralManagementJsonInputParams.CURRENCY.getValue()).value(currencyCode)
+                    .failWithCode("not.an.organisation.currency", "Currency must be one of the organisation currencies");
+        }
     }
 
     @Transactional

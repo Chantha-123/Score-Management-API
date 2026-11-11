@@ -19,7 +19,6 @@
 package org.apache.fineract.portfolio.collateralmanagement.api;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.math.BigDecimal;
 
 final class CollateralManagementApiResourceSwagger {
 
@@ -52,12 +51,8 @@ final class CollateralManagementApiResourceSwagger {
         @Schema(example = "Gold")
         public String name;
         private CollateralManagementApiResourceSwagger.GetCollateralManagementsResponse.GetCollateralTypeResponse quality;
-        @Schema(example = "20000")
-        public BigDecimal basePrice;
         @Schema(example = "gm")
         public String unitType;
-        @Schema(example = "80")
-        public BigDecimal pctToBase;
         public CollateralManagementApiResourceSwagger.GetCollateralManagementsResponse.GetCollateralCurrencyResponse currency;
     }
 
@@ -97,10 +92,6 @@ final class CollateralManagementApiResourceSwagger {
 
         @Schema(example = "22kt")
         public String quality;
-        @Schema(example = "4500")
-        public BigDecimal basePrice;
-        @Schema(example = "80")
-        public BigDecimal pctToBase;
         @Schema(example = "gm")
         public String unitType;
         @Schema(example = "gold")
@@ -125,10 +116,6 @@ final class CollateralManagementApiResourceSwagger {
 
         @Schema(example = "22kt")
         public String quality;
-        @Schema(example = "4500")
-        public BigDecimal basePrice;
-        @Schema(example = "80")
-        public BigDecimal pctToBase;
         @Schema(example = "gm")
         public String unitType;
         @Schema(example = "gold")

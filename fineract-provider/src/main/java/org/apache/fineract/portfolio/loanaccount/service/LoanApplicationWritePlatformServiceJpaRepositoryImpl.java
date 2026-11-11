@@ -127,6 +127,7 @@ import org.apache.fineract.portfolio.loanaccount.serialization.LoanApplicationCo
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanApplicationTransitionApiJsonValidator;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.data.LoanProductData;
+import org.apache.fineract.portfolio.loanproduct.domain.InterestMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProduct;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductRelatedDetail;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductRepository;
@@ -676,7 +677,16 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                     loan.loanProduct().getLoanProductRelatedDetail().getInterestCalculationPeriodMethod());
         }
         if (!interestMethod) {
-            productRelatedDetail.setInterestMethod(loan.loanProduct().getLoanProductRelatedDetail().getInterestMethod());
+            // The repayment schedule has already been generated with the requested interest method, so silently
+            // resetting it here would persist terms that do not match the schedule. Reject the mismatch instead.
+            final InterestMethod productInterestMethod = loan.loanProduct().getLoanProductRelatedDetail().getInterestMethod();
+            if (productRelatedDetail.getInterestMethod() != productInterestMethod) {
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                new DataValidatorBuilder(dataValidationErrors).resource("loan").parameter("interestType")
+                        .value(productRelatedDetail.getInterestMethod().getValue())
+                        .failWithCode("not.overridable.for.product", "Interest method cannot be overridden for this loan product");
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
         }
         if (!graceOnPrincipalAndInterestPayment) {
             productRelatedDetail.setGraceOnInterestPayment(loan.loanProduct().getLoanProductRelatedDetail().getGraceOnInterestPayment());

@@ -47,7 +47,6 @@ import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
 import org.apache.fineract.portfolio.loanaccount.exception.InvalidAmountOfCollateralQuantity;
-import org.apache.fineract.portfolio.loanaccount.exception.InvalidAmountOfCollaterals;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
 import org.apache.fineract.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
@@ -111,6 +110,17 @@ public final class LoanApplicationCommandFromApiJsonHelper {
     }
 
     public void validateForCreate(final String json, final boolean isMeetingMandatoryForJLGLoans, final LoanProduct loanProduct) {
+        validateForCreate(json, isMeetingMandatoryForJLGLoans, loanProduct, false);
+    }
+
+    /**
+     * @param isScheduleCalculationOnly
+     *            when true (POST /loans?command=calculateLoanSchedule) an individual loan may omit clientId, so the
+     *            repayment schedule can be previewed before the client exists (e.g. in the onboarding wizard). The
+     *            actual submission always validates with this flag set to false.
+     */
+    public void validateForCreate(final String json, final boolean isMeetingMandatoryForJLGLoans, final LoanProduct loanProduct,
+            final boolean isScheduleCalculationOnly) {
         if (StringUtils.isBlank(json)) {
             throw new InvalidJsonException();
         }
@@ -134,8 +144,13 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             final Long clientId = this.fromApiJsonHelper.extractLongNamed("clientId", element);
             final Long groupId = this.fromApiJsonHelper.extractLongNamed("groupId", element);
             if (loanType.isIndividualAccount()) {
-                baseDataValidator.reset().parameter("clientId").value(clientId).notNull().longGreaterThanZero();
-                baseDataValidator.reset().parameter("groupId").value(groupId).mustBeBlankWhenParameterProvided("clientId", clientId);
+                // a schedule preview may be calculated before the client exists
+                if (!isScheduleCalculationOnly || clientId != null) {
+                    baseDataValidator.reset().parameter("clientId").value(clientId).notNull().longGreaterThanZero();
+                    // inside the guard: mustBeBlankWhenParameterProvided also fails when both values are null,
+                    // which is the normal case for a schedule preview before the client exists
+                    baseDataValidator.reset().parameter("groupId").value(groupId).mustBeBlankWhenParameterProvided("clientId", clientId);
+                }
             }
 
             if (loanType.isGroupAccount()) {
@@ -920,7 +935,6 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                         final Set<String> supportedParameters = new HashSet<>(Arrays.asList("id", "clientCollateralId", "quantity"));
                         final JsonArray array = topLevelJsonElement.get("collateral").getAsJsonArray();
                         if (array.size() > 0) {
-                            BigDecimal totalAmount = BigDecimal.ZERO;
                             for (int i = 1; i <= array.size(); i++) {
                                 final JsonObject collateralItemElement = array.get(i - 1).getAsJsonObject();
 
@@ -940,20 +954,6 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                                         locale);
                                 baseDataValidator.reset().parameter("collateral").parameterAtIndexArray("quantity", i).value(quantity)
                                         .notNull().positiveAmount();
-
-                                if (clientCollateralId != null || quantity != null) {
-                                    BigDecimal baseAmount = this.clientCollateralManagementRepositoryWrapper
-                                            .getCollateral(clientCollateralId).getCollaterals().getBasePrice();
-                                    BigDecimal pctToBase = this.clientCollateralManagementRepositoryWrapper
-                                            .getCollateral(clientCollateralId).getCollaterals().getPctToBase();
-                                    BigDecimal total = baseAmount.multiply(pctToBase).multiply(quantity);
-                                    totalAmount = totalAmount.add(total);
-                                }
-                            }
-                            if (principal != null) {
-                                if (principal.compareTo(totalAmount) > 0) {
-                                    throw new InvalidAmountOfCollaterals(totalAmount);
-                                }
                             }
                         }
                     } else {

@@ -68,20 +68,17 @@ public class CollateralManagementHelper {
         LOG.info("---------------------------------CREATING A COLLATERAL_PRODUCT---------------------------------------------");
         final String COLLATERAL_PRODUCT_URL = "/fineract-provider/api/v1/collateral-management" + "?" + Utils.TENANT_IDENTIFIER;
         return Utils.performServerPost(requestSpec, responseSpec, COLLATERAL_PRODUCT_URL,
-                collateralProductAsJson(Utils.randomNameGenerator("COLLATERAL_PRODUCT", 5), "USD", "acre", "agriculture",
-                        BigDecimal.valueOf(40), BigDecimal.valueOf(100000000), "en"),
+                collateralProductAsJson(Utils.randomNameGenerator("COLLATERAL_PRODUCT", 5), "USD", "acre", "agriculture", "en"),
                 "resourceId");
     }
 
     public static String collateralProductAsJson(final String name, final String currency, final String unitType, final String quality,
-            final BigDecimal pctToBase, final BigDecimal baseAmount, final String locale) {
+            final String locale) {
         final HashMap<String, String> map = new HashMap<>();
         map.put("name", name);
         map.put("currency", currency);
         map.put("unitType", unitType);
         map.put("quality", quality);
-        map.put("pctToBase", pctToBase.toString());
-        map.put("basePrice", baseAmount.toString());
         map.put("locale", locale);
         LOG.info("map :  {}", map);
         return new Gson().toJson(map);
@@ -93,33 +90,17 @@ public class CollateralManagementHelper {
         final String COLLATERAL_PRODUCT_URL = "/fineract-provider/api/v1/collateral-management/" + collateralId + "?"
                 + Utils.TENANT_IDENTIFIER;
         return Utils.performServerPut(requestSpec, responseSpec, COLLATERAL_PRODUCT_URL,
-                updateCollateralProductAsJson(Utils.randomNameGenerator("COLLATERAL_PRODUCT", 5), "USD", "acre", "agriculture",
-                        BigDecimal.valueOf(30), BigDecimal.valueOf(100000), "en"),
+                updateCollateralProductAsJson(Utils.randomNameGenerator("COLLATERAL_PRODUCT", 5), "USD", "acre", "agriculture", "en"),
                 "resourceId");
     }
 
-    public static String updateCollateralProductAsString(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-            final Integer collateralId) {
-
-        Object updateCollateralObject = updateCollateralProduct(requestSpec, responseSpec, collateralId);
-        // Convert the Object to String and fetch updated value
-        Gson gson = new Gson();
-        String result = gson.toJson(updateCollateralObject);
-        JsonObject reportObject = JsonParser.parseString(result).getAsJsonObject();
-        String value = reportObject.get("pctToBase").getAsString();
-
-        return value;
-    }
-
     public static String updateCollateralProductAsJson(final String name, final String currency, final String unitType,
-            final String quality, final BigDecimal pctToBase, final BigDecimal baseAmount, final String locale) {
+            final String quality, final String locale) {
         final HashMap<String, String> map = new HashMap<>();
         map.put("name", name);
         map.put("currency", currency);
         map.put("unitType", unitType);
         map.put("quality", quality);
-        map.put("pctToBase", pctToBase.toString());
-        map.put("basePrice", baseAmount.toString());
         map.put("locale", locale);
         return new Gson().toJson(map);
     }

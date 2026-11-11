@@ -318,6 +318,24 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder createLoanCoBorrower(final Long loanId) {
+        this.actionName = "CREATE";
+        this.entityName = "LOANCOBORROWER";
+        this.entityId = null;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/coborrowers";
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteLoanCoBorrower(final Long loanId, final Long coBorrowerId) {
+        this.actionName = "DELETE";
+        this.entityName = "LOANCOBORROWER";
+        this.entityId = coBorrowerId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/coborrowers/" + coBorrowerId;
+        return this;
+    }
+
     public CommandWrapperBuilder createGuarantor(final Long loanId) {
         this.actionName = "CREATE";
         this.entityName = "GUARANTOR";

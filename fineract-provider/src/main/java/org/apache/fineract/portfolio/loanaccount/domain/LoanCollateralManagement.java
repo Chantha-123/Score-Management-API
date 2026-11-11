@@ -118,7 +118,7 @@ public class LoanCollateralManagement extends AbstractPersistableCustom {
     }
 
     public LoanCollateralManagementData toCommand() {
-        return new LoanCollateralManagementData(this.clientCollateralManagement.getId(), this.getQuantity(), null, null, getId());
+        return new LoanCollateralManagementData(this.clientCollateralManagement.getId(), this.getQuantity(), getId());
     }
 
 }

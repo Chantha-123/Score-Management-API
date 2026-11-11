@@ -147,7 +147,7 @@ public class CollateralManagementApiResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = CollateralManagementApiResourceSwagger.GetCollateralProductTemplate.class)))) })
     public String getCollateralTemplate(@Context final UriInfo uriInfo) {
-        Collection<CurrencyData> currencyDataCollection = this.currencyReadPlatformService.retrieveAllPlatformCurrencies();
+        Collection<CurrencyData> currencyDataCollection = this.currencyReadPlatformService.retrieveAllowedCurrencies();
         return this.apiJsonSerializerServiceForCurrency.serialize(currencyDataCollection);
     }
 

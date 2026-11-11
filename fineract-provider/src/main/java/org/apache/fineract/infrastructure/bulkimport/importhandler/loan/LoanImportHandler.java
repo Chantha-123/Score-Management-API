@@ -342,8 +342,7 @@ public class LoanImportHandler implements ImportHandler {
         if (collateralId != null) {
             if (ImportHandlerUtils.readAsDouble(LoanConstants.LOAN_COLLATERAL_QUANTITY, row) != null) {
                 loanCollateralManagementData.add(new LoanCollateralManagementData(collateralId,
-                        BigDecimal.valueOf(ImportHandlerUtils.readAsDouble(LoanConstants.LOAN_COLLATERAL_QUANTITY, row)), null, null,
-                        null));
+                        BigDecimal.valueOf(ImportHandlerUtils.readAsDouble(LoanConstants.LOAN_COLLATERAL_QUANTITY, row)), null));
             } else {
                 throw new InvalidAmountOfCollateralQuantity(null);
             }

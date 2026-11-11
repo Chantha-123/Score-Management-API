@@ -58,4 +58,7 @@
     <include file="parts/0041_jasper_accounting_reports.xml" relativeToChangelogFile="true"/>
     <include file="parts/0042_jasper_loan_repayment_schedule_khmer.xml" relativeToChangelogFile="true"/>
     <include file="parts/0043_add_loan_charge_fee_permission.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0044_collateral_drop_base_price_requirement.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0045_collateral_product_read_permissions.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0046_loan_collateral_amounts_and_co_borrower.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

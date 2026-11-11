@@ -22,7 +22,9 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
@@ -91,7 +93,9 @@ public class BatchApiServiceImpl implements BatchApiService {
             final BatchResponse rootResponse = safelyExecuteStrategy(commandStrategy, rootRequest, uriInfo);
 
             responseList.add(rootResponse);
-            responseList.addAll(this.processChildRequests(rootNode, rootResponse, uriInfo));
+            final Map<Long, BatchResponse> ancestorResponses = new HashMap<>();
+            ancestorResponses.put(rootRequest.getRequestId(), rootResponse);
+            responseList.addAll(this.processChildRequests(rootNode, rootResponse, ancestorResponses, uriInfo));
         }
 
         Collections.sort(responseList, Comparator.comparing(BatchResponse::getRequestId));
@@ -117,7 +121,8 @@ public class BatchApiServiceImpl implements BatchApiService {
         }
     }
 
-    private List<BatchResponse> processChildRequests(final BatchRequestNode rootRequest, BatchResponse rootResponse, UriInfo uriInfo) {
+    private List<BatchResponse> processChildRequests(final BatchRequestNode rootRequest, BatchResponse rootResponse,
+            final Map<Long, BatchResponse> ancestorResponses, UriInfo uriInfo) {
 
         final List<BatchResponse> childResponses = new ArrayList<>();
         if (rootRequest.getChildRequests().size() > 0) {
@@ -130,7 +135,7 @@ public class BatchApiServiceImpl implements BatchApiService {
                 try {
 
                     if (rootResponse.getStatusCode().equals(200)) {
-                        childRequest = this.resolutionHelper.resoluteRequest(childRequest, rootResponse);
+                        childRequest = this.resolutionHelper.resoluteRequest(childRequest, rootResponse, ancestorResponses);
                         final CommandStrategy commandStrategy = this.strategyProvider.getCommandStrategy(
                                 CommandContext.resource(childRequest.getRelativeUrl()).method(childRequest.getMethod()).build());
 
@@ -148,8 +153,18 @@ public class BatchApiServiceImpl implements BatchApiService {
                                 "Parent request with id " + rootResponse.getRequestId() + " was erroneous!");
                         childResponse.setBody(conflictError.getMessage());
                     }
-                    childResponses.addAll(this.processChildRequests(childNode, childResponse, uriInfo));
+                    final Map<Long, BatchResponse> childAncestors = new HashMap<>(ancestorResponses);
+                    childAncestors.put(childRequest.getRequestId(), childResponse);
+                    childResponses.addAll(this.processChildRequests(childNode, childResponse, childAncestors, uriInfo));
 
+                } catch (RuntimeException ex) {
+                    // e.g. an invalid dependency reference: map it like any other platform error
+                    log.warn("Exception while resolving batch request {}", childRequest.getRequestId(), ex);
+                    final ErrorInfo errorInfo = ErrorHandler.handler(ex);
+                    childResponse = new BatchResponse();
+                    childResponse.setRequestId(childRequest.getRequestId());
+                    childResponse.setStatusCode(errorInfo.getStatusCode());
+                    childResponse.setBody(errorInfo.getMessage());
                 } catch (Throwable ex) {
 
                     childResponse = new BatchResponse();
@@ -181,6 +196,24 @@ public class BatchApiServiceImpl implements BatchApiService {
                 public List<BatchResponse> doInTransaction(TransactionStatus status) {
                     try {
                         responseList.addAll(handleBatchRequests(requestList, uriInfo));
+                        // Some failures are reported as an error response without an exception crossing a
+                        // @Transactional boundary (unknown command 501, skipped child 409, resolution errors). In
+                        // those cases the transaction is not marked rollback-only yet, so the successful requests
+                        // would be committed. Enforce all-or-nothing explicitly.
+                        if (!status.isRollbackOnly()) {
+                            for (BatchResponse res : responseList) {
+                                if (!Integer.valueOf(200).equals(res.getStatusCode())) {
+                                    status.setRollbackOnly();
+                                    final BatchResponse errResponse = new BatchResponse();
+                                    errResponse.setStatusCode(Status.BAD_REQUEST.getStatusCode());
+                                    errResponse.setBody(
+                                            "Transaction is being rolled back. First erroneous request: \n" + new Gson().toJson(res));
+                                    final List<BatchResponse> errResponseList = new ArrayList<>();
+                                    errResponseList.add(errResponse);
+                                    return errResponseList;
+                                }
+                            }
+                        }
                         return responseList;
                     } catch (RuntimeException ex) {
 

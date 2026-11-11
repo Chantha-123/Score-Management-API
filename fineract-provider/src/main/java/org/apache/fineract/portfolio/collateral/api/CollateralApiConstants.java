@@ -35,7 +35,8 @@ public final class CollateralApiConstants {
     public enum CollateralJSONinputParams {
 
         LOAN_ID("loanId"), COLLATERAL_ID("collateralId"), COLLATERAL_TYPE_ID("collateralTypeId"), VALUE("value"), DESCRIPTION(
-                "description");
+                "description"), BOOKING_AMOUNT("bookingAmount"), EVALUATION_AMOUNT("evaluationAmount"), ISSUED_ON_DATE(
+                        "issuedOnDate"), EXPIRED_ON_DATE("expiredOnDate"), LOCALE("locale"), DATE_FORMAT("dateFormat");
 
         private final String value;
 

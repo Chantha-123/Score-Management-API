@@ -145,7 +145,6 @@ import org.apache.fineract.portfolio.charge.exception.LoanChargeWaiveCannotBeRev
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.exception.ClientNotActiveException;
 import org.apache.fineract.portfolio.collateralmanagement.domain.ClientCollateralManagement;
-import org.apache.fineract.portfolio.collateralmanagement.exception.LoanCollateralAmountNotSufficientException;
 import org.apache.fineract.portfolio.collectionsheet.command.CollectionSheetBulkDisbursalCommand;
 import org.apache.fineract.portfolio.collectionsheet.command.CollectionSheetBulkRepaymentCommand;
 import org.apache.fineract.portfolio.collectionsheet.command.SingleDisbursalCommand;
@@ -335,28 +334,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             loan.getDisbursementDetails().add(disbursementDetail);
         }
 
-        // Get disbursedAmount
-        final BigDecimal disbursedAmount = loan.getDisbursedAmount();
-        final Set<LoanCollateralManagement> loanCollateralManagements = loan.getLoanCollateralManagements();
-
-        // Get relevant loan collateral modules
-        if ((loanCollateralManagements != null && loanCollateralManagements.size() != 0)
-                && AccountType.fromInt(loan.getLoanType()).isIndividualAccount()) {
-
-            BigDecimal totalCollateral = BigDecimal.valueOf(0);
-
-            for (LoanCollateralManagement loanCollateralManagement : loanCollateralManagements) {
-                BigDecimal quantity = loanCollateralManagement.getQuantity();
-                BigDecimal pctToBase = loanCollateralManagement.getClientCollateralManagement().getCollaterals().getPctToBase();
-                BigDecimal basePrice = loanCollateralManagement.getClientCollateralManagement().getCollaterals().getBasePrice();
-                totalCollateral = totalCollateral.add(quantity.multiply(basePrice).multiply(pctToBase).divide(BigDecimal.valueOf(100)));
-            }
-
-            // Validate the loan collateral value against the disbursedAmount
-            if (disbursedAmount.compareTo(totalCollateral) > 0) {
-                throw new LoanCollateralAmountNotSufficientException(disbursedAmount);
-            }
-        }
+        // Collateral carries no valuation, so the disbursed amount is not limited by it.
 
         final LocalDate actualDisbursementDate = command.localDateValueOfParameterNamed("actualDisbursementDate");
 

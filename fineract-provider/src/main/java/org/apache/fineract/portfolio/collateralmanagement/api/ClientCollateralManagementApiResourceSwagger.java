@@ -42,10 +42,6 @@ final class ClientCollateralManagementApiResourceSwagger {
             public Long id;
             @Schema(example = "10")
             public BigDecimal quantity;
-            @Schema(example = "10000.00")
-            public BigDecimal total;
-            @Schema(example = "9000.00")
-            public BigDecimal totalCollateral;
             public GetClientIdResponse client;
             public Set<GetTransactionDataResponse> transaction;
         }
@@ -81,10 +77,6 @@ final class ClientCollateralManagementApiResourceSwagger {
 
         @Schema(example = "1")
         public Long collateralId;
-        @Schema(example = "10000.00")
-        public BigDecimal basePrice;
-        @Schema(example = "40")
-        public BigDecimal pctToBase;
         @Schema(example = "10")
         public BigDecimal quantity;
         @Schema(example = "Vehicle")

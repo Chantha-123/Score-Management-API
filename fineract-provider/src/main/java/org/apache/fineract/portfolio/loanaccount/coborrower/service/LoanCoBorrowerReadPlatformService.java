@@ -16,16 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.fineract.portfolio.collateralmanagement.exception;
+package org.apache.fineract.portfolio.loanaccount.coborrower.service;
 
-import java.math.BigDecimal;
-import org.apache.fineract.infrastructure.core.exception.AbstractPlatformDomainRuleException;
+import java.util.List;
+import org.apache.fineract.portfolio.loanaccount.coborrower.data.LoanCoBorrowerData;
 
-public class LoanCollateralAmountNotSufficientException extends AbstractPlatformDomainRuleException {
+public interface LoanCoBorrowerReadPlatformService {
 
-    public LoanCollateralAmountNotSufficientException(final BigDecimal amount) {
-        super("error.msg.loan.disbursement.amount.not.sufficient",
-                "The disbursement amount `" + amount + "`" + "` is invalid or insufficient to disburse the loan.", new Object[] { amount });
-    }
+    List<LoanCoBorrowerData> retrieveForLoan(Long loanId);
 
+    List<LoanCoBorrowerData> retrieveCoBorrowedLoansForClient(Long clientId);
 }

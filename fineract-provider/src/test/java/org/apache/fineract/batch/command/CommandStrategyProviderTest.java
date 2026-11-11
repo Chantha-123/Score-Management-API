@@ -31,7 +31,12 @@ import org.apache.fineract.batch.command.internal.ApproveLoanCommandStrategy;
 import org.apache.fineract.batch.command.internal.ApproveLoanRescheduleCommandStrategy;
 import org.apache.fineract.batch.command.internal.CollectChargesCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateChargeCommandStrategy;
+import org.apache.fineract.batch.command.internal.CreateClientCollateralCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateClientCommandStrategy;
+import org.apache.fineract.batch.command.internal.CreateClientIdentifierCommandStrategy;
+import org.apache.fineract.batch.command.internal.CreateGuarantorCommandStrategy;
+import org.apache.fineract.batch.command.internal.CreateLoanCoBorrowerCommandStrategy;
+import org.apache.fineract.batch.command.internal.CreateLoanCollateralCommandStrategy;
 import org.apache.fineract.batch.command.internal.CreateTransactionLoanCommandStrategy;
 import org.apache.fineract.batch.command.internal.DisburseLoanCommandStrategy;
 import org.apache.fineract.batch.command.internal.GetDatatableEntryByAppTableIdCommandStrategy;
@@ -73,6 +78,16 @@ public class CommandStrategyProviderTest {
                         mock(CreateTransactionLoanCommandStrategy.class)),
                 Arguments.of("clients/456?command=activate", HttpMethod.POST, "activateClientCommandStrategy",
                         mock(ActivateClientCommandStrategy.class)),
+                Arguments.of("clients/456/identifiers", HttpMethod.POST, "createClientIdentifierCommandStrategy",
+                        mock(CreateClientIdentifierCommandStrategy.class)),
+                Arguments.of("clients/456/collaterals", HttpMethod.POST, "createClientCollateralCommandStrategy",
+                        mock(CreateClientCollateralCommandStrategy.class)),
+                Arguments.of("loans/123/collaterals", HttpMethod.POST, "createLoanCollateralCommandStrategy",
+                        mock(CreateLoanCollateralCommandStrategy.class)),
+                Arguments.of("loans/123/guarantors", HttpMethod.POST, "createGuarantorCommandStrategy",
+                        mock(CreateGuarantorCommandStrategy.class)),
+                Arguments.of("loans/123/coborrowers", HttpMethod.POST, "createLoanCoBorrowerCommandStrategy",
+                        mock(CreateLoanCoBorrowerCommandStrategy.class)),
                 Arguments.of("loans/123?command=approve", HttpMethod.POST, "approveLoanCommandStrategy",
                         mock(ApproveLoanCommandStrategy.class)),
                 Arguments.of("loans/123?command=disburse", HttpMethod.POST, "disburseLoanCommandStrategy",

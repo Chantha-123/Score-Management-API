@@ -98,6 +98,16 @@ public class CommandStrategyProvider {
                 "createTransactionLoanCommandStrategy");
         this.commandStrategies.put(CommandContext.resource("clients\\/\\d+\\?command=activate").method("POST").build(),
                 "activateClientCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("clients\\/\\d+\\/identifiers").method("POST").build(),
+                "createClientIdentifierCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("clients\\/\\d+\\/collaterals").method("POST").build(),
+                "createClientCollateralCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\/collaterals").method("POST").build(),
+                "createLoanCollateralCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\/guarantors").method("POST").build(),
+                "createGuarantorCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\/coborrowers").method("POST").build(),
+                "createLoanCoBorrowerCommandStrategy");
         this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\?command=approve").method("POST").build(),
                 "approveLoanCommandStrategy");
         this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\?command=disburse").method("POST").build(),

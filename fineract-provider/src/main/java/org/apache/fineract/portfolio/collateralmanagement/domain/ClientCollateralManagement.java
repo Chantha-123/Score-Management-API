@@ -96,20 +96,6 @@ public class ClientCollateralManagement extends AbstractPersistableCustom {
         return changes;
     }
 
-    public BigDecimal getTotal() {
-        if (BigDecimal.ZERO.compareTo(this.quantity) == 0) {
-            return BigDecimal.ZERO;
-        }
-        return this.quantity.multiply(getCollaterals().getBasePrice());
-    }
-
-    public BigDecimal getTotalCollateral(BigDecimal total) {
-        if (BigDecimal.ZERO.compareTo(total) == 0) {
-            return BigDecimal.ZERO;
-        }
-        return total.multiply(getCollaterals().getPctToBase().divide(BigDecimal.valueOf(100)));
-    }
-
     public void updateQuantity(BigDecimal quantity) {
         this.quantity = quantity;
     }

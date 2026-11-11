@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.collateral.domain;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.persistence.Column;
@@ -53,6 +54,18 @@ public class LoanCollateral extends AbstractPersistableCustom {
     @Column(name = "description", length = 500)
     private String description;
 
+    @Column(name = "booking_amount", scale = 6, precision = 19)
+    private BigDecimal bookingAmount;
+
+    @Column(name = "evaluation_amount", scale = 6, precision = 19)
+    private BigDecimal evaluationAmount;
+
+    @Column(name = "issued_on_date")
+    private LocalDate issuedOnDate;
+
+    @Column(name = "expired_on_date")
+    private LocalDate expiredOnDate;
+
     public static LoanCollateral from(final CodeValue collateralType, final BigDecimal value, final String description) {
         return new LoanCollateral(null, collateralType, value, description);
     }
@@ -81,7 +94,12 @@ public class LoanCollateral extends AbstractPersistableCustom {
     public static LoanCollateral fromJson(final Loan loan, final CodeValue collateralType, final JsonCommand command) {
         final String description = command.stringValueOfParameterNamed(CollateralJSONinputParams.DESCRIPTION.getValue());
         final BigDecimal value = command.bigDecimalValueOfParameterNamed(CollateralJSONinputParams.VALUE.getValue());
-        return new LoanCollateral(loan, collateralType, value, description);
+        final LoanCollateral collateral = new LoanCollateral(loan, collateralType, value, description);
+        collateral.bookingAmount = command.bigDecimalValueOfParameterNamed(CollateralJSONinputParams.BOOKING_AMOUNT.getValue());
+        collateral.evaluationAmount = command.bigDecimalValueOfParameterNamed(CollateralJSONinputParams.EVALUATION_AMOUNT.getValue());
+        collateral.issuedOnDate = command.localDateValueOfParameterNamed(CollateralJSONinputParams.ISSUED_ON_DATE.getValue());
+        collateral.expiredOnDate = command.localDateValueOfParameterNamed(CollateralJSONinputParams.EXPIRED_ON_DATE.getValue());
+        return collateral;
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -108,12 +126,49 @@ public class LoanCollateral extends AbstractPersistableCustom {
             this.value = newValue;
         }
 
+        final String bookingAmountParamName = CollateralJSONinputParams.BOOKING_AMOUNT.getValue();
+        if (command.isChangeInBigDecimalParameterNamed(bookingAmountParamName, this.bookingAmount)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(bookingAmountParamName);
+            actualChanges.put(bookingAmountParamName, newValue);
+            this.bookingAmount = newValue;
+        }
+
+        final String evaluationAmountParamName = CollateralJSONinputParams.EVALUATION_AMOUNT.getValue();
+        if (command.isChangeInBigDecimalParameterNamed(evaluationAmountParamName, this.evaluationAmount)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(evaluationAmountParamName);
+            actualChanges.put(evaluationAmountParamName, newValue);
+            this.evaluationAmount = newValue;
+        }
+
+        final String issuedOnDateParamName = CollateralJSONinputParams.ISSUED_ON_DATE.getValue();
+        if (command.isChangeInLocalDateParameterNamed(issuedOnDateParamName, this.issuedOnDate)) {
+            final LocalDate newValue = command.localDateValueOfParameterNamed(issuedOnDateParamName);
+            actualChanges.put(issuedOnDateParamName, command.stringValueOfParameterNamed(issuedOnDateParamName));
+            this.issuedOnDate = newValue;
+        }
+
+        final String expiredOnDateParamName = CollateralJSONinputParams.EXPIRED_ON_DATE.getValue();
+        if (command.isChangeInLocalDateParameterNamed(expiredOnDateParamName, this.expiredOnDate)) {
+            final LocalDate newValue = command.localDateValueOfParameterNamed(expiredOnDateParamName);
+            actualChanges.put(expiredOnDateParamName, command.stringValueOfParameterNamed(expiredOnDateParamName));
+            this.expiredOnDate = newValue;
+        }
+
         return actualChanges;
     }
 
     public CollateralData toData() {
         final CodeValueData typeData = this.type.toData();
-        return CollateralData.instance(getId(), typeData, this.value, this.description, null);
+        return CollateralData.instance(getId(), typeData, this.value, this.description, null, this.bookingAmount, this.evaluationAmount,
+                this.issuedOnDate, this.expiredOnDate);
+    }
+
+    public LocalDate getIssuedOnDate() {
+        return this.issuedOnDate;
+    }
+
+    public LocalDate getExpiredOnDate() {
+        return this.expiredOnDate;
     }
 
     public void setCollateralType(final CodeValue type) {

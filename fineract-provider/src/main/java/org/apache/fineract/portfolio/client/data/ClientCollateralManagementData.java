@@ -28,52 +28,21 @@ public final class ClientCollateralManagementData implements Serializable {
 
     private final Long id;
 
-    private final BigDecimal pctToBase;
-
-    private final BigDecimal unitPrice;
-
-    private final BigDecimal total;
-
-    private final BigDecimal totalCollateral;
-
     private final String name;
 
-    private ClientCollateralManagementData(final BigDecimal quantity, final Long id, final BigDecimal pctToBase, final BigDecimal unitPrice,
-            final BigDecimal total, final BigDecimal totalCollateral, final String name) {
+    private ClientCollateralManagementData(final BigDecimal quantity, final Long id, final String name) {
         this.id = id;
-        this.pctToBase = pctToBase;
-        this.total = total;
-        this.totalCollateral = totalCollateral;
-        this.unitPrice = unitPrice;
         this.quantity = quantity;
         this.name = name;
     }
 
-    public static ClientCollateralManagementData setCollateralValues(final ClientCollateralManagement clientCollateralManagements,
-            final BigDecimal total, final BigDecimal totalCollateral) {
+    public static ClientCollateralManagementData setCollateralValues(final ClientCollateralManagement clientCollateralManagements) {
         return new ClientCollateralManagementData(clientCollateralManagements.getQuantity(), clientCollateralManagements.getId(),
-                clientCollateralManagements.getCollaterals().getPctToBase(), clientCollateralManagements.getCollaterals().getBasePrice(),
-                total, totalCollateral, clientCollateralManagements.getCollaterals().getName());
+                clientCollateralManagements.getCollaterals().getName());
     }
 
     public BigDecimal getQuantity() {
         return this.quantity;
-    }
-
-    public BigDecimal getTotal() {
-        return this.total;
-    }
-
-    public BigDecimal getPctToBase() {
-        return this.pctToBase;
-    }
-
-    public BigDecimal getTotalCollateral() {
-        return this.totalCollateral;
-    }
-
-    public BigDecimal getUnitPrice() {
-        return this.unitPrice;
     }
 
     public Long getId() {

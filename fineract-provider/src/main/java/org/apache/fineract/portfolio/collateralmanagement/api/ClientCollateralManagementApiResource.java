@@ -73,7 +73,7 @@ public class ClientCollateralManagementApiResource {
     private final CodeValueReadPlatformService codeValueReadPlatformService;
     private final ClientCollateralManagementReadPlatformService clientCollateralManagementReadPlatformService;
     private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(
-            Arrays.asList("name", "quantity", "total", "totalCollateral", "clientId", "loanTransactionData"));
+            Arrays.asList("name", "quantity", "clientId", "loanTransactionData"));
 
     public ClientCollateralManagementApiResource(final DefaultToApiJsonSerializer<ClientCollateralManagement> apiJsonSerializerService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
